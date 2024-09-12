@@ -9,16 +9,21 @@ from utils import parent_by_selection_order
 importlib.reload(controller_curves)
 importlib.reload(parent_by_selection_order)
 
+def set_scales(input_object,value):
+    cmds.setAttr(input_object+ '.sx',value)
+    cmds.setAttr(input_object + '.sy', value)
+    cmds.setAttr(input_object + '.sz', value)
+
 
 def set_colors(controller_shape,controller_color):
     shape = controller_shape + 'Shape'
     cmds.setAttr(controller_shape+'.overrideEnabled',1)
     cmds.setAttr(controller_shape+'.overrideColor',controller_color)
 
-def set_scales(input_object,value):
-    cmds.setAttr(input_object+ '.sx',value)
-    cmds.setAttr(input_object + '.sy', value)
-    cmds.setAttr(input_object + '.sz', value)
+def get_scales(input_object,value):
+    cmds.getAttr(input_object+ '.scaleX',value)
+    cmds.getAttr(input_object + '.scaleY', value)
+    cmds.getAttr(input_object + '.scaleZ', value)
 
 def set_rotations(input_object,value):
     cmds.setAttr(input_object + '.rx',value)
@@ -106,45 +111,99 @@ def get_top_parent_of_selected(nodeType):
 
 def mirror_guides():
 
-    mirrored_guides_list = []
+
+
+    def mirror_guides_process(side_1,side_2,top_guide_group):
+
+        mirrored_guides_list = []
+
+        guide_hierarchy = cmds.listRelatives(top_guide_group,allDescendents=True,type='transform')
+
+        print(guide_hierarchy)
+
+        for eachGuide in guide_hierarchy:
+
+            if 'constraint' not in eachGuide:
+
+                mirrored_guide = controller_curves.create_curve('cross',controller_name=eachGuide.replace(side_1,side_2))
+                cmds.matchTransform(mirrored_guide,eachGuide)
+                mirrored_guides_list.append(mirrored_guide)
+
+        print(mirrored_guides_list)
+
+        reverse_order_list = sorted(mirrored_guides_list)
+
+        parent_by_selection_order.parent_by_selection_list(reverse_order_list)
+
+        guide_hierarchy_parent = reverse_order_list[0]
+
+        mirrored_guides_parent_group = cmds.group(em=True, name = top_guide_group.replace(side_1,side_2))
+
+        cmds.matchTransform(mirrored_guides_parent_group,top_guide_group)
+
+        print(guide_hierarchy_parent)
+
+        cmds.parent(guide_hierarchy_parent,mirrored_guides_parent_group)
+
+        temporary_mirror_group=cmds.group(em=True,name='temporary_mirror_grp')
+
+        cmds.parent(mirrored_guides_parent_group,temporary_mirror_group)
+
+        cmds.setAttr(temporary_mirror_group + '.sx', -1)
+
+        cmds.parent(mirrored_guides_parent_group,world=True)
+
+        cmds.delete(temporary_mirror_group)
+
+        if side_1 == 'lf':
+            for eachGuide in reverse_order_list:
+                set_colors(eachGuide, 13)
+        if side_1 == 'rt':
+            for eachGuide in reverse_order_list:
+                set_colors(eachGuide, 6)
+
 
     top_guide_group = get_top_parent_of_selected('transform')
 
-    guide_hierarchy = cmds.listRelatives(top_guide_group,allDescendents=True,type='transform')
+    side_1 = ''
+    side_2 = ''
+    opposite_group = ''
 
-    print(guide_hierarchy)
+    if 'grp' in top_guide_group:
 
-    for eachGuide in guide_hierarchy:
+        if 'lf' in top_guide_group:
 
-        mirrored_guide = controller_curves.create_curve('cross',controller_name=eachGuide.replace('lf','rt'))
-        cmds.matchTransform(mirrored_guide,eachGuide)
-        mirrored_guides_list.append(mirrored_guide)
+            side_1= 'lf'
+            side_2 = 'rt'
+            opposite_group = top_guide_group.replace('lf','rt')
 
-    print(mirrored_guides_list)
+            if cmds.objExists(opposite_group):
 
-    reverse_order_list = sorted(mirrored_guides_list)
+                cmds.delete(opposite_group)
+                mirror_guides_process(side_1, side_2,top_guide_group)
 
-    parent_by_selection_order.parent_by_selection_list(reverse_order_list)
+            else:
+                mirror_guides_process(side_1, side_2,top_guide_group)
 
-    guide_hierarchy_parent = reverse_order_list[0]
 
-    mirrored_guides_parent_group = cmds.group(em=True, name = top_guide_group.replace('lf','rt'))
+        if 'rt' in top_guide_group:
 
-    cmds.matchTransform(mirrored_guides_parent_group,top_guide_group)
+            side_1 = 'rt'
+            side_2 = 'lf'
 
-    print(guide_hierarchy_parent)
+            opposite_group = top_guide_group.replace('rt', 'lf')
 
-    cmds.parent(guide_hierarchy_parent,mirrored_guides_parent_group)
+            if cmds.objExists(opposite_group):
+                cmds.delete(opposite_group)
+                mirror_guides_process(side_1, side_2,top_guide_group)
+            else:
+                mirror_guides_process(side_1, side_2,top_guide_group)
 
-    temporary_mirror_group=cmds.group(em=True,name='temporary_mirror_grp')
+    else:
+        print('no guide group found')
 
-    cmds.parent(mirrored_guides_parent_group,temporary_mirror_group)
 
-    cmds.setAttr(temporary_mirror_group + '.sx', -1)
 
-    cmds.parent(mirrored_guides_parent_group,world=True)
-
-    cmds.delete(temporary_mirror_group)
 
 
 

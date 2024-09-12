@@ -39,6 +39,9 @@ def create_left_arm_guides(side,letter):
     left_arm_guides_list = [lf_shoulder_guide, lf_upper_arm_guide, lf_elbow_guide, lf_wrist_guide,
                             lf_arm_end_guide]
 
+    for eachGuide in left_arm_guides_list:
+        rigging_functions.set_colors(eachGuide,6)
+
     print(left_arm_guides_list)
 
     cmds.select(clear = True)
