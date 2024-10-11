@@ -1,5 +1,24 @@
 import maya.cmds as cmds
 
+"""
+copiar lo de abajo na mas pa usar el codigo
+
+import maya.cmds as cmds
+
+import importlib
+
+from utils import controller_curves
+
+importlib.reload(controller_curves)
+
+shape_name = 'cube'
+controller_name = 'test_ctrl'
+
+controller_curves = create_curve(shape_name, controller_name)
+
+
+"""
+
 def create_curve(shape_name, controller_name):
     """Function that returns a selected shape properly named
     shape_name: octagon,square,circleThreeArrow,circleTwoArrow,circleArrow,gear,pyramid,cube,triangle.
@@ -8,11 +27,13 @@ def create_curve(shape_name, controller_name):
 
     if shape_name == 'point':
         cmds.curve(d=1, p=[(0, 0, 0), (1, 0, 0)], n=controller_name)
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
     if shape_name == 'circle':
         cmds.circle( nr=(0, 1, 0), c=(0, 0, 0),constructionHistory=False, n=controller_name )
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
@@ -21,6 +42,7 @@ def create_curve(shape_name, controller_name):
 
         square_curve = cmds.curve(d=1, p=[[3.536, 0.0, 3.536], [3.536, 0.0, -3.536], [-3.536, 0.0, -3.536], [-3.536, 0.0, 3.536],
                          [3.536, 0.0, 3.536]],name=controller_name)
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
@@ -29,6 +51,7 @@ def create_curve(shape_name, controller_name):
 
         octagon_shape = cmds.curve( d=1, p=[[5.0, 0.0, 0.0], [3.536, 0.0, -3.536], [0.0, 0.0, -5.0], [-3.536, 0.0, -3.536], [-5.0, 0.0, -0.0],
                     [-3.536, 0.0, 3.536], [-0.0, 0.0, 5.0], [3.536, 0.0, 3.536], [5.0, 0.0, 0.0]],name=controller_name)
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
@@ -37,6 +60,7 @@ def create_curve(shape_name, controller_name):
         #triangle
 
         triangle_shape = cmds.curve( d=1,p=[[-0.5, 0.0, -0.5], [0.5, 0.0, -0.5], [0.0, 0.0, 0.5], [-0.5, 0.0, -0.5]],name=controller_name)
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
@@ -55,6 +79,7 @@ def create_curve(shape_name, controller_name):
                     [0.783, -5.949, 0.0], [1.294, -4.83, 0.0], [2.296, -5.543, 0.0], [2.5, -4.33, 0.0], [3.653, -4.76, 0.0],
                     [3.536, -3.536, 0.0], [4.76, -3.653, 0.0], [4.33, -2.5, 0.0], [5.543, -2.296, 0.0], [4.83, -1.294, 0.0],
                     [5.949, -0.783, 0.0], [5.0, 0.0, 0.0]], name=controller_name)
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
@@ -66,6 +91,7 @@ def create_curve(shape_name, controller_name):
                                 [-2.103, -0.54, 2.147], [-2.103, -0.54, -2.147], [-2.103, 0.954, -2.147], [-2.103, 0.954, 2.147],
                                 [2.103, 0.954, 2.147], [2.103, 0.954, -2.147], [-2.103, 0.954, -2.147], [-2.103, -0.54, -2.147],
                                 [2.103, -0.54, -2.147], [2.103, 0.954, -2.147], [2.103, -0.54, -2.147], [2.103, -0.54, 2.147]], name=controller_name)
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
@@ -90,6 +116,7 @@ def create_curve(shape_name, controller_name):
                            [-2.985, 0.0, -0.995], [-2.985, 0.0, -0.746], [-2.795, 0.0, -0.746], [-2.606, 0.0, -0.746],
                            [-2.416, 0.0, -0.746], [-2.297, 0.0, -1.138], [-1.865, 0.0, -1.867], [-1.136, 0.0, -2.298],
                            [-0.742, 0.0, -2.42]], name=controller_name)
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
@@ -112,6 +139,7 @@ def create_curve(shape_name, controller_name):
                     [0.443, 0.0, -1.328], [0.332, 0.0, -1.328], [0.332, 0.0, -1.243], [0.332, 0.0, -1.158],
                     [0.332, 0.0, -1.073], [0.506, 0.0, -1.022], [0.805, 0.0, -0.845], [0.992, 0.0, -0.556],
                     [1.048, 0.0, -0.412]], name=controller_name)
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
@@ -130,6 +158,7 @@ def create_curve(shape_name, controller_name):
                [0.08, -0.0, 0.282], [0.121, -0.0, 0.241], [0.101, -0.0, 0.241], [0.08, -0.0, 0.241], [0.06, -0.0, 0.241],
                [0.06, -0.0, 0.226], [0.06, -0.0, 0.21], [0.06, -0.0, 0.195], [0.092, -0.0, 0.186], [0.146, -0.0, 0.154],
                [0.18, -0.0, 0.101], [0.19, -0.0, 0.075]],name=controller_name )
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
@@ -142,6 +171,7 @@ def create_curve(shape_name, controller_name):
             p=[[-0.5, 0.0, -0.5], [0.5, 0.0, -0.5], [0.5, 0.0, -0.5], [0.5, 0.0, 0.5], [0.5, 0.0, 0.5], [-0.5, 0.0, 0.5],
                [-0.5, 0.0, 0.5], [-0.5, 0.0, -0.5], [-0.5, 0.0, -0.5], [0.0, 1.0, 0.0], [0.5, 0.0, -0.5], [0.0, 1.0, 0.0],
                [0.5, 0.0, 0.5], [0.0, 1.0, 0.0], [-0.5, 0.0, 0.5], [0.0, 1.0, 0.0], [-0.5, 0.0, -0.5]],name=controller_name)
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
@@ -157,6 +187,7 @@ def create_curve(shape_name, controller_name):
                            (-0.652776, 0, -0.652998), (-0.439199, 0, -0.785581),
                            (-0.537718, 0, -0.349716), (-0.124602, 0, -1.096506)],
                    name= controller_name)
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
@@ -170,6 +201,7 @@ def create_curve(shape_name, controller_name):
                                      (0, 1, 0), (0.5, 0.866025, 0), (0.866025, 0.5, 0), (1, 0, 0), (0.866025, -0.5, 0),
                                      (0.5, -0.866025, 0), (0, -1, 0), (-0.5, -0.866025, 0), (-0.866025, -0.5, 0),
                                      (-1, 0, 0), (-0.707107, 0, 0.707107), (0, 0, 1)], n=controller_name)
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
@@ -179,6 +211,7 @@ def create_curve(shape_name, controller_name):
 
         cube_shape= cmds.curve(d = 1, p=[(0.5,0.5,0.5),(0.5,0.5,-0.5),(-0.5,0.5,-0.5),(-0.5,-0.5,-0.5),(0.5,-0.5,-0.5),(0.5,0.5,-0.5),(-0.5,0.5,-0.5),(-0.5,0.5,0.5),(0.5,0.5,0.5),(0.5,-0.5,0.5),
                                          (0.5,-0.5,-0.5),(-0.5,-0.5,-0.5),(-0.5,-0.5,0.5),(0.5,-0.5,0.5),(-0.5,-0.5,0.5),(-0.5,0.5,0.5)], n =controller_name)
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
@@ -187,6 +220,7 @@ def create_curve(shape_name, controller_name):
         # cross
 
         cross_shape = cmds.curve(d=1,p=[[0.0, 0.0, 1.0], [0.0, 0.0, -1.0], [0.0, 0.0, 0.0], [-1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, -1.0, 0.0]], n = controller_name)
+        rename_curves_shape_nodes(controller_name)
 
         return controller_name
 
@@ -196,6 +230,12 @@ def create_curve(shape_name, controller_name):
 
         print('invalid name ')
 
+def rename_curves_shape_nodes(curve_name):
+
+    curve_name_shape_children_list = cmds.ls(curve_name,dagObjects=True,shapes=True)
+
+    for shapeNode in curve_name_shape_children_list:
+        cmds.rename(shapeNode,curve_name + '_shape')
 
 
 

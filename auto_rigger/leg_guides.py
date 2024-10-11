@@ -30,17 +30,14 @@ leg_guides.mirror_leg_guides()
 
 def create_left_leg_guides(side,letter):
 
+    hips_guide = ''
+
     lf_hip_guide = controller_curves.create_curve('cross',controller_name=side + '_' + '0' + '_'+ letter + '_' + 'hip_guide')
     lf_upper_leg_guide = controller_curves.create_curve('cross',controller_name=side + '_' + '1' + '_'+ letter +  '_' + 'upperLeg_guide')
     lf_knee_guide = controller_curves.create_curve('cross',controller_name=side + '_' + '2' + '_'+ letter +  '_' + 'knee_guide')
     lf_ankle_guide = controller_curves.create_curve('cross',controller_name=side + '_' + '3' + '_'+ letter + '_' + 'ankle_guide')
     lf_ball_guide = controller_curves.create_curve('cross',controller_name=side + '_' + '4' + '_'+ letter + '_' + 'ball_guide')
     lf_leg_end_guide = controller_curves.create_curve('cross',controller_name=side + '_' + '5' + '_'+ letter + '_' + 'legEnd_guide')
-
-    left_leg_guides_list = [lf_hip_guide, lf_upper_leg_guide, lf_knee_guide, lf_ankle_guide,
-                            lf_ball_guide]
-
-    print(left_leg_guides_list)
 
     cmds.select(clear = True)
 
@@ -65,6 +62,9 @@ def create_left_leg_guides(side,letter):
 
     left_leg_guides_list = [lf_hip_guide,lf_upper_leg_guide,lf_knee_guide,lf_ankle_guide,lf_ball_guide,lf_leg_end_guide]
 
+    for eachGuide in left_leg_guides_list:
+        rigging_functions.set_colors(eachGuide, 6)
+
     print(left_leg_guides_list)
 
     parent_by_selection_order.parent_by_selection_list(left_leg_guides_list)
@@ -75,16 +75,12 @@ def create_left_leg_guides(side,letter):
     cmds.parent(lf_hip_guide,left_leg_guide_group)
 
 
-    left_foot_guide_group = cmds.group(em=True, name =side + '_' + letter + '_' + 'foot_guide_grp' )
-
-    cmds.matchTransform(left_foot_guide_group, lf_ankle_guide)
-
     lf_heel_guide = controller_curves.create_curve('cross',
-                                                  controller_name=side + '_' + '0' + '_' + letter + '_' + 'heel_guide')
+                                                  controller_name=side + '_' + '6' + '_' + letter + '_' + 'heelFoot_guide')
     lf_outer_foot_guide = controller_curves.create_curve('cross',
-                                                        controller_name=side + '_' + '0' + '_' + letter + '_' + 'outerFoot_guide')
+                                                        controller_name=side + '_' + '6' + '_' + letter + '_' + 'outerFoot_guide')
     lf_inner_foot_guide = controller_curves.create_curve('cross',
-                                                   controller_name=side + '_' + '0' + '_' + letter + '_' + 'innerFoot_guide')
+                                                   controller_name=side + '_' + '6' + '_' + letter + '_' + 'innerFoot_guide')
 
     foot_guides_list = [lf_heel_guide,lf_outer_foot_guide,lf_inner_foot_guide]
 
@@ -104,12 +100,18 @@ def create_left_leg_guides(side,letter):
     foot_guides_list = [lf_heel_guide,lf_outer_foot_guide,lf_inner_foot_guide]
 
     for eachFootGuide in foot_guides_list:
-        cmds.parent(eachFootGuide,left_foot_guide_group)
+        cmds.parent(eachFootGuide,lf_ankle_guide)
 
-    cmds.parentConstraint(lf_ankle_guide,left_foot_guide_group, name = side + '_' + '0' + '_' + letter + '_' + 'footGuide_constraint')
+
+   #if cmds.objExists('*hips_guide'):
+   #
+   #    hips_guide = cmds.ls('*hips_guide',type='transform')[0]
+   #
+   #    cmds.parent(left_leg_guide_group,hips_guide)
 
 
     return left_leg_guides_list,foot_guides_list
+
 
 
 def mirror_leg_guides():

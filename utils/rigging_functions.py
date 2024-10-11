@@ -78,6 +78,72 @@ def add_rotation_order_for_ctrls(object):
     cmds.addAttr(object, longName='RotationOrder', at='enum', en=('xyz:yzx:zxy:xzy:yxz:zyx'), k=True)
     cmds.connectAttr(object + '.RotationOrder', object + '.rotateOrder')
 
+def create_controller(joint, controller_color, controller_shape, prefix, constraint_type, maintain_offset):
+
+    """
+    joint = str
+    controller_color = int
+    controller_shape = str
+    prefix = str
+    constraint_type = str
+    maintain_offset = boolean
+
+
+    """
+
+    controller_name = joint.replace('_jnt', prefix)
+
+    controller_shape = controller_curves.create_curve(shape_name=controller_shape,
+                                                      controller_name=controller_name)
+
+    cmds.matchTransform(controller_shape, joint)
+
+    add_rotation_order_for_ctrls(controller_shape)
+
+    set_colors(controller_shape, controller_color)
+
+    ctrl_group_name = controller_shape + '_grp'
+
+    ctrl_group_name = cmds.group(name=ctrl_group_name, empty=True)
+
+    cmds.matchTransform(ctrl_group_name, controller_shape)
+
+    cmds.parent(controller_shape, ctrl_group_name)
+
+    if constraint_type == 'parent':
+
+        constraint_name = joint.replace('_jnt','_parentConstraint')
+
+        cmds.parentConstraint(controller_shape, joint, maintainOffset=maintain_offset, name = constraint_name)
+
+    if constraint_type == 'point':
+
+        constraint_name = joint.replace('_jnt','_pointConstraint')
+
+
+        cmds.pointConstraint(controller_shape, joint, maintainOffset=maintain_offset, name =constraint_name)
+
+    if constraint_type == 'orient':
+
+        constraint_name = joint.replace('_jnt','_orientConstraint')
+
+
+        cmds.orientConstraint(controller_shape, joint, maintainOffset=maintain_offset, name=constraint_name)
+
+    if constraint_type == 'aim':
+
+        constraint_name = joint.replace('_jnt','_aimConstraint')
+
+
+        cmds.aimConstraint(controller_shape, joint, maintainOffset=maintain_offset, name=constraint_name)
+
+    return controller_name
+
+
+
+
+
+
 
 def get_top_parent_of_selected(nodeType):
     """
@@ -112,10 +178,23 @@ def get_top_parent_of_selected(nodeType):
 def mirror_guides():
 
 
-
     def mirror_guides_process(side_1,side_2,top_guide_group):
 
         mirrored_guides_list = []
+
+        foot_guide_list = []
+
+        ankle_guide = ''
+
+        mirrored_hand_group = ''
+
+        mirrored_hand_list = []
+
+        mirrored_thumb_list = []
+        mirrored_index_list = []
+        mirrored_middle_list = []
+        mirrored_ring_list = []
+        mirrored_pinky_list = []
 
         guide_hierarchy = cmds.listRelatives(top_guide_group,allDescendents=True,type='transform')
 
@@ -125,7 +204,18 @@ def mirror_guides():
 
             if 'constraint' not in eachGuide:
 
-                mirrored_guide = controller_curves.create_curve('cross',controller_name=eachGuide.replace(side_1,side_2))
+                if 'hand' in eachGuide:
+                    mirrored_guide = controller_curves.create_curve('circle',
+                                                                    controller_name=eachGuide.replace(side_1, side_2))
+                    cmds.setAttr(mirrored_guide + '.rz', -90)
+                    freeze(mirrored_guide)
+                else:
+
+                    mirrored_guide = controller_curves.create_curve('cross',controller_name=eachGuide.replace(side_1,side_2))
+
+
+
+
                 cmds.matchTransform(mirrored_guide,eachGuide)
                 mirrored_guides_list.append(mirrored_guide)
 
@@ -162,6 +252,78 @@ def mirror_guides():
             for eachGuide in reverse_order_list:
                 set_colors(eachGuide, 6)
 
+        for eachMirroredGuide in reverse_order_list:
+            if 'ankle_guide' in eachMirroredGuide:
+                ankle_guide = eachMirroredGuide
+            if 'Foot' in eachMirroredGuide:
+                foot_guide_list.append(eachMirroredGuide)
+
+        for eachFootGuide in foot_guide_list:
+            cmds.parent(eachFootGuide,world=True)
+
+        for eachFootGuide in foot_guide_list:
+            cmds.parent(eachFootGuide,ankle_guide)
+
+        if 'hand' in mirrored_guides_parent_group:
+
+            mirrored_hand_group = mirrored_guides_parent_group
+
+            mirrored_hand_guide = ''
+
+            mirrored_hand_list = cmds.listRelatives(mirrored_guides_parent_group,allDescendents=True,type = 'transform')
+
+            for eachGuide in mirrored_hand_list:
+
+                if 'hand' in eachGuide:
+                    mirrored_hand_guide = eachGuide
+
+            for eachGuide in mirrored_hand_list:
+
+                if 'thumb' in eachGuide:
+                    mirrored_thumb_list.append(eachGuide)
+                if 'index' in eachGuide:
+                    mirrored_index_list.append(eachGuide)
+                if 'middle' in eachGuide:
+                    mirrored_middle_list.append(eachGuide)
+                if 'ring' in eachGuide:
+                    mirrored_ring_list.append(eachGuide)
+                if 'pinky' in eachGuide:
+                    mirrored_pinky_list.append(eachGuide)
+
+            for eachGuide in mirrored_hand_list:
+                cmds.parent(eachGuide, world=True)
+
+
+            reversed_thumb_list = sorted(mirrored_thumb_list)
+            reversed_index_list = sorted(mirrored_index_list)
+            reversed_middle_list = sorted(mirrored_middle_list)
+            reversed_ring_list = sorted(mirrored_ring_list)
+            reversed_pinky_list = sorted(mirrored_pinky_list)
+
+            parent_by_selection_order.parent_by_selection_list(reversed_thumb_list)
+            parent_by_selection_order.parent_by_selection_list(reversed_index_list)
+            parent_by_selection_order.parent_by_selection_list(reversed_middle_list)
+            parent_by_selection_order.parent_by_selection_list(reversed_ring_list)
+            parent_by_selection_order.parent_by_selection_list(reversed_pinky_list)
+
+            all_mirrored_fingers_guide_list = [reversed_thumb_list, reversed_index_list, reversed_middle_list, reversed_ring_list,
+                                      reversed_pinky_list]
+
+            for eachFingerGuide in all_mirrored_fingers_guide_list:
+                cmds.parent(eachFingerGuide[0], mirrored_hand_guide)
+
+            cmds.parent(mirrored_hand_guide, mirrored_hand_group)
+
+
+
+            print('here are the mirrored hand guides:')
+            print(mirrored_hand_list)
+
+            print('here are the mirrored thumb guides:')
+            print(mirrored_thumb_list)
+
+
+
 
     top_guide_group = get_top_parent_of_selected('transform')
 
@@ -180,10 +342,12 @@ def mirror_guides():
             if cmds.objExists(opposite_group):
 
                 cmds.delete(opposite_group)
-                mirror_guides_process(side_1, side_2,top_guide_group)
+
+                mirrored_guides = mirror_guides_process(side_1, side_2,top_guide_group)
 
             else:
-                mirror_guides_process(side_1, side_2,top_guide_group)
+                mirrored_guides = mirror_guides_process(side_1, side_2,top_guide_group)
+
 
 
         if 'rt' in top_guide_group:
@@ -195,12 +359,15 @@ def mirror_guides():
 
             if cmds.objExists(opposite_group):
                 cmds.delete(opposite_group)
-                mirror_guides_process(side_1, side_2,top_guide_group)
+
+                mirrored_guides = mirror_guides_process(side_1, side_2,top_guide_group)
             else:
-                mirror_guides_process(side_1, side_2,top_guide_group)
+                mirrored_guides = mirror_guides_process(side_1, side_2,top_guide_group)
 
     else:
         print('no guide group found')
+
+
 
 
 
@@ -232,6 +399,88 @@ def replace_substring_in_names(old_substring, new_substring,object_list):
                 print(f"Renamed '{obj}' to '{new_name}'")
             except Exception as e:
                 print(f"Failed to rename '{obj}': {e}")
+
+def spline_ik_setup(start_joint, end_joint, spline_spans, spline_handle_name, controller_color, controller_shape,
+                    world_up_type, forward_axis, world_up_axis,
+                    world_up_vector_x, world_up_vector_y, world_up_vector_z,
+                    world_up_vector_end_x, world_up_vector_end_y, world_up_vector_end_z):
+
+    """ setup for a ik spline module
+    start_joint, end_joint = str
+    spline_spans = int
+    spline_handle_name =str
+    controller_color = int
+    controller_shape = str
+    world_up_type,forward_axis,world_up_axis = int
+    world_up_vector_x,world_up_vector_y,world_up_vector_z = int
+    world_up_vector_end_x,world_up_vector_end_y,world_up_vector_end_z = int
+
+    """
+
+    ik_spline_curve = ''
+    ik_spline_effector = ''
+
+    spline_ik_handle = cmds.ikHandle(solver='ikSplineSolver', startJoint=start_joint,
+                                           endEffector=end_joint,
+                  numSpans=spline_spans,
+                  name=spline_handle_name)[0]
+
+    if cmds.objExists('curve1'):
+        ik_spline_curve_name = spline_handle_name.replace('Handle','Curve')
+        ik_spline_curve = cmds.rename('curve1',ik_spline_curve_name)
+
+    if cmds.objExists('effector1'):
+        ik_spline_effector_name = spline_handle_name.replace('Handle','Effector')
+        ik_spline_effector = cmds.rename('effector1',ik_spline_effector_name)
+
+    cmds.select(clear=True)
+
+    start_joint_name = start_joint.replace('_jnt','_start_jnt')
+
+    start_bind_joint = cmds.joint(n=start_joint_name, radius=3)
+
+    cmds.matchTransform(start_bind_joint, start_joint)
+    cmds.select(clear=True)
+
+    end_joint_name = end_joint.replace('_jnt', '_end_jnt')
+
+    end_bind_joint = cmds.joint(n=end_joint_name, radius=3)
+
+    cmds.matchTransform(end_bind_joint, end_joint)
+    cmds.select(clear=True)
+
+    cmds.select(start_bind_joint, add=True)
+    cmds.select(end_bind_joint, add=True)
+    cmds.select(ik_spline_curve, add=True)
+
+    cmds.skinCluster(bindMethod=0, maximumInfluences=2, name=ik_spline_curve + '_skinCluster')
+
+
+
+    create_controller(start_bind_joint, controller_color, controller_shape, '_ik_ctrl',
+                      'parent', True)
+
+    create_controller(end_bind_joint, controller_color, controller_shape, '_ik_ctrl',
+                      'parent', True)
+
+    cmds.setAttr(spline_ik_handle + '.dTwistControlEnable', 1)
+    cmds.setAttr(spline_ik_handle + '.dWorldUpType', world_up_type)
+    cmds.setAttr(spline_ik_handle + '.dForwardAxis', forward_axis)
+    cmds.setAttr(spline_ik_handle + '.dWorldUpAxis', world_up_axis)
+    cmds.setAttr(spline_ik_handle + '.dWorldUpVectorX', world_up_vector_x)
+    cmds.setAttr(spline_ik_handle + '.dWorldUpVectorY', world_up_vector_y)
+    cmds.setAttr(spline_ik_handle + '.dWorldUpVectorZ', world_up_vector_z)
+    cmds.setAttr(spline_ik_handle + '.dWorldUpVectorEndX', world_up_vector_end_x)
+    cmds.setAttr(spline_ik_handle + '.dWorldUpVectorEndY',world_up_vector_end_y)
+    cmds.setAttr(spline_ik_handle + '.dWorldUpVectorEndZ', world_up_vector_end_z)
+    cmds.connectAttr(start_bind_joint + '.worldMatrix', spline_ik_handle + '.dWorldUpMatrix')
+    cmds.connectAttr(end_bind_joint + '.worldMatrix', spline_ik_handle + '.dWorldUpMatrixEnd')
+
+    cmds.select(clear=True)
+
+
+
+
 
 
 
