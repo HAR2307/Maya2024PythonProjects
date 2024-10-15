@@ -78,10 +78,12 @@ def add_rotation_order_for_ctrls(object):
     cmds.addAttr(object, longName='RotationOrder', at='enum', en=('xyz:yzx:zxy:xzy:yxz:zyx'), k=True)
     cmds.connectAttr(object + '.RotationOrder', object + '.rotateOrder')
 
-def create_controller(joint, controller_color, controller_shape, prefix, constraint_type, maintain_offset):
+def create_controller(joint, controller_size,controller_color, controller_shape, prefix, constraint_type,
+                      maintain_offset):
 
     """
     joint = str
+    controller_size = float
     controller_color = int
     controller_shape = str
     prefix = str
@@ -95,6 +97,10 @@ def create_controller(joint, controller_color, controller_shape, prefix, constra
 
     controller_shape = controller_curves.create_curve(shape_name=controller_shape,
                                                       controller_name=controller_name)
+
+    set_scales(controller_shape,controller_size)
+
+    freeze(controller_shape)
 
     cmds.matchTransform(controller_shape, joint)
 
@@ -401,6 +407,7 @@ def replace_substring_in_names(old_substring, new_substring,object_list):
                 print(f"Failed to rename '{obj}': {e}")
 
 def spline_ik_setup(start_joint, end_joint, spline_spans, spline_handle_name, controller_color, controller_shape,
+                    controller_size,
                     world_up_type, forward_axis, world_up_axis,
                     world_up_vector_x, world_up_vector_y, world_up_vector_z,
                     world_up_vector_end_x, world_up_vector_end_y, world_up_vector_end_z):
@@ -457,10 +464,10 @@ def spline_ik_setup(start_joint, end_joint, spline_spans, spline_handle_name, co
 
 
 
-    create_controller(start_bind_joint, controller_color, controller_shape, '_ik_ctrl',
+    create_controller(start_bind_joint, controller_size,controller_color,controller_shape, '_ik_ctrl',
                       'parent', True)
 
-    create_controller(end_bind_joint, controller_color, controller_shape, '_ik_ctrl',
+    create_controller(end_bind_joint, controller_size,controller_color,controller_shape, '_ik_ctrl',
                       'parent', True)
 
     cmds.setAttr(spline_ik_handle + '.dTwistControlEnable', 1)
@@ -477,6 +484,8 @@ def spline_ik_setup(start_joint, end_joint, spline_spans, spline_handle_name, co
     cmds.connectAttr(end_bind_joint + '.worldMatrix', spline_ik_handle + '.dWorldUpMatrixEnd')
 
     cmds.select(clear=True)
+
+
 
 
 

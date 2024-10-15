@@ -90,6 +90,7 @@ def create_spine_rig ():
     spline_handle_name = 'cn_spine_ik_splineHandle'
     controller_color = 22
     controller_shape = 'cube'
+    controller_size = 3
     world_up_type = 4
     forward_axis = 2
     world_up_axis = 3
@@ -102,22 +103,26 @@ def create_spine_rig ():
 
     rigging_functions.spline_ik_setup(start_joint, end_joint, spline_spans, spline_handle_name, controller_color,
                                       controller_shape,
+                                      controller_size,
                                       world_up_type, forward_axis, world_up_axis,
                                       world_up_vector_x, world_up_vector_y, world_up_vector_z,
                                       world_up_vector_end_x, world_up_vector_end_y, world_up_vector_end_z)
 
+
+    fk_joint_list = []
+
     cmds.select(start_joint,hierarchy=True)
 
-    spine_joint_list = cmds.ls(sl=True)
+    joint_list = cmds.ls(sl=True)
 
     cmds.select(clear=True)
 
-    counter = 0
+    joint_counter = 0
 
-    for eachJoint in spine_joint_list:
+    for eachJoint in joint_list:
 
 
-        if counter %  2 ==0:
+        if joint_counter %  2 ==0:
 
             fk_joint_name = eachJoint.replace('_jnt', '_fk_jnt')
 
@@ -127,7 +132,9 @@ def create_spine_rig ():
 
             cmds.setAttr(fk_joint + '.displayLocalAxis', True)
 
-        counter += 1
+            fk_joint_list.append(fk_joint)
+
+        joint_counter += 1
 
     start_bind_group = cmds.ls('*_start*_grp',type = 'transform')[0]
 
@@ -142,6 +149,115 @@ def create_spine_rig ():
 
     cmds.parentConstraint('cn_6_chest_fk_jnt', 'cn_6_chest_end_ik_ctrl_grp',
                           maintainOffset=False,name = end_constraint_name)
+
+    fk_ctrl_list = []
+
+
+    for eachJoint in range(1,len(fk_joint_list)-1):
+
+        fk_ctrl= rigging_functions.create_controller(fk_joint_list[eachJoint],2,
+                                                     18,'circle','_ctrl',
+                                                'parent',False)
+
+        fk_ctrl_list.append(fk_ctrl)
+
+    fk_ctrl_group_list = cmds.ls('*_fk_ctrl_grp',type='transform')
+
+    reverse_ctrl_list =sorted(fk_ctrl_list)
+    reverse_grp_list = sorted(fk_ctrl_group_list)
+
+    print(reverse_ctrl_list)
+    print(reverse_grp_list)
+
+
+    for group, ctrl in zip(reverse_grp_list[1:], reverse_ctrl_list):
+
+        print(f'{group} -> {ctrl}')
+
+        cmds.parent(group,ctrl)
+
+    ##create stretch setup
+
+    spline_curve_name = cmds.ls('*ik_splineCurve')[0]
+    curve_info_node = cmds.arclen( spline_curve_name,constructionHistory =True )
+    curve_info_node_name = spline_curve_name + '_curveInfo'
+    if cmds.objExists('curveInfo1'):
+        cmds.rename('curveInfo1',curve_info_node_name)
+
+    spline_multiply_divide_node_name = spline_curve_name + '_multiplyDivide'
+
+    spline_multiply_divide_node = cmds.createNode('multiplyDivide',name=spline_multiply_divide_node_name)
+
+    cmds.connectAttr(curve_info_node_name+'.arcLength',
+                     spline_multiply_divide_node_name+'.input1'+'.input1Y')
+
+    spline_arclen =  cmds.arclen(spline_curve_name)
+
+    cmds.setAttr(spline_multiply_divide_node_name+'.input2'+'.input2Y',spline_arclen)
+    cmds.setAttr(spline_multiply_divide_node_name+'.operation',2)
+
+    spline_squash_stretch_pow_name = spline_curve_name + '_squashStretchPow'
+
+    spline_squash_stretch_pow = cmds.createNode('multiplyDivide',name=spline_squash_stretch_pow_name)
+
+    cmds.connectAttr(spline_multiply_divide_node_name+'.output'+'.outputY',
+                     spline_squash_stretch_pow_name + '.input1' + '.input1Y')
+
+    cmds.setAttr(spline_squash_stretch_pow_name + '.operation', 3)
+    cmds.setAttr(spline_squash_stretch_pow_name + '.input2' + '.input2Y', 0.5)
+
+    spline_squash_stretch_invert_div_name = spline_curve_name + '_squashStretchInvertDiv'
+
+    spline_squash_stretch_invert_div = cmds.createNode('multiplyDivide', name=spline_squash_stretch_invert_div_name)
+
+    cmds.connectAttr(spline_squash_stretch_pow_name + '.output' + '.outputY',
+                     spline_squash_stretch_invert_div_name + '.input2' + '.input2Y')
+
+    cmds.setAttr(spline_squash_stretch_invert_div_name + '.operation', 2)
+    cmds.setAttr(spline_squash_stretch_invert_div_name + '.input1' + '.input1Y', 1)
+
+    for eachJoint in joint_list:
+        cmds.connectAttr(spline_multiply_divide_node_name + '.output' + '.outputY',
+                         eachJoint + '.scale' + '.scaleY')
+
+    for eachJoint in joint_list:
+        cmds.connectAttr(spline_squash_stretch_invert_div_name + '.output' + '.outputY',
+                         eachJoint + '.scale' + '.scaleX')
+        cmds.connectAttr(spline_squash_stretch_invert_div_name + '.output' + '.outputY',
+                         eachJoint + '.scale' + '.scaleZ')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
