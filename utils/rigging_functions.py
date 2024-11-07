@@ -4,6 +4,7 @@ import importlib
 
 from utils import controller_curves
 from utils import parent_by_selection_order
+from math import pow,sqrt
 
 
 importlib.reload(controller_curves)
@@ -143,7 +144,11 @@ def create_controller(joint, controller_size,controller_color, controller_shape,
 
         cmds.aimConstraint(controller_shape, joint, maintainOffset=maintain_offset, name=constraint_name)
 
-    return controller_name
+    if constraint_type == 'none':
+
+        cmds.matchTransform(ctrl_group_name, joint)
+
+    return [controller_name,ctrl_group_name]
 
 
 
@@ -406,14 +411,16 @@ def replace_substring_in_names(old_substring, new_substring,object_list):
             except Exception as e:
                 print(f"Failed to rename '{obj}': {e}")
 
-def spline_ik_setup(start_joint, end_joint, spline_spans, spline_handle_name, controller_color, controller_shape,
+def spline_ik_setup(joint_list, spline_spans, spline_handle_name, controller_color, controller_shape,
                     controller_size,
                     world_up_type, forward_axis, world_up_axis,
                     world_up_vector_x, world_up_vector_y, world_up_vector_z,
-                    world_up_vector_end_x, world_up_vector_end_y, world_up_vector_end_z):
+                    world_up_vector_end_x, world_up_vector_end_y, world_up_vector_end_z,
+                    spline_axis):
 
     """ setup for a ik spline module
-    start_joint, end_joint = str
+
+    joint_list = list
     spline_spans = int
     spline_handle_name =str
     controller_color = int
@@ -421,11 +428,67 @@ def spline_ik_setup(start_joint, end_joint, spline_spans, spline_handle_name, co
     world_up_type,forward_axis,world_up_axis = int
     world_up_vector_x,world_up_vector_y,world_up_vector_z = int
     world_up_vector_end_x,world_up_vector_end_y,world_up_vector_end_z = int
+    spline axis =  str X,Y,Z
+
+    Returns the name of the ik curve name
 
     """
 
+    joint_list_len = len(joint_list)
+
+    print(joint_list_len)
+
+    middle_index = int(len(joint_list) / 2)  # = int(2.5) = 2
+
+    start_joint = joint_list[0]
+    mid_joint = joint_list[middle_index]
+    end_joint = joint_list[joint_list_len-1]
+
     ik_spline_curve = ''
     ik_spline_effector = ''
+
+    start_joint_name = start_joint.replace('_jnt', '_start_jnt')
+
+    start_bind_joint = cmds.joint(n=start_joint_name, radius=3)
+
+    cmds.matchTransform(start_bind_joint, start_joint)
+    cmds.select(clear=True)
+
+    mid_joint_name = mid_joint.replace('_jnt', '_mid_jnt')
+
+    mid_bind_joint = cmds.joint(n=mid_joint_name, radius=3)
+
+    cmds.matchTransform(mid_bind_joint, mid_joint)
+    cmds.select(clear=True)
+
+    end_joint_name = end_joint.replace('_jnt', '_end_jnt')
+
+    end_bind_joint = cmds.joint(n=end_joint_name, radius=3)
+
+    cmds.matchTransform(end_bind_joint, end_joint)
+    cmds.select(clear=True)
+
+    start_joint_ctrl = create_controller(start_bind_joint, controller_size, controller_color, controller_shape,
+                                         '_ik_ctrl',
+                                         'parent', True)
+
+    mid_joint_ctrl = create_controller(mid_bind_joint, controller_size, controller_color, controller_shape, '_ik_ctrl',
+                                       'parent', True)
+
+    end_joint_ctrl = create_controller(end_bind_joint, controller_size, controller_color, controller_shape, '_ik_ctrl',
+                                       'parent', True)
+
+    start_joint_ctrl_grp = start_joint_ctrl[1]
+
+    mid_joint_ctrl_grp = mid_joint_ctrl[1]
+
+    end_joint_ctrl_grp = end_joint_ctrl[1]
+
+    spline_setup_ik_group = start_joint.replace('_jnt', '_setupSplineIK_grp')
+
+    spline_setup_ik_group = cmds.group(empty=True, name=spline_setup_ik_group)
+
+    cmds.matchTransform(spline_setup_ik_group, start_bind_joint)
 
     spline_ik_handle = cmds.ikHandle(solver='ikSplineSolver', startJoint=start_joint,
                                            endEffector=end_joint,
@@ -442,33 +505,14 @@ def spline_ik_setup(start_joint, end_joint, spline_spans, spline_handle_name, co
 
     cmds.select(clear=True)
 
-    start_joint_name = start_joint.replace('_jnt','_start_jnt')
-
-    start_bind_joint = cmds.joint(n=start_joint_name, radius=3)
-
-    cmds.matchTransform(start_bind_joint, start_joint)
-    cmds.select(clear=True)
-
-    end_joint_name = end_joint.replace('_jnt', '_end_jnt')
-
-    end_bind_joint = cmds.joint(n=end_joint_name, radius=3)
-
-    cmds.matchTransform(end_bind_joint, end_joint)
-    cmds.select(clear=True)
-
     cmds.select(start_bind_joint, add=True)
+    cmds.select(mid_bind_joint, add=True)
     cmds.select(end_bind_joint, add=True)
     cmds.select(ik_spline_curve, add=True)
 
-    cmds.skinCluster(bindMethod=0, maximumInfluences=2, name=ik_spline_curve + '_skinCluster')
+    cmds.skinCluster(bindMethod=0, maximumInfluences=3, name=ik_spline_curve + '_skinCluster')
 
 
-
-    create_controller(start_bind_joint, controller_size,controller_color,controller_shape, '_ik_ctrl',
-                      'parent', True)
-
-    create_controller(end_bind_joint, controller_size,controller_color,controller_shape, '_ik_ctrl',
-                      'parent', True)
 
     cmds.setAttr(spline_ik_handle + '.dTwistControlEnable', 1)
     cmds.setAttr(spline_ik_handle + '.dWorldUpType', world_up_type)
@@ -485,8 +529,164 @@ def spline_ik_setup(start_joint, end_joint, spline_spans, spline_handle_name, co
 
     cmds.select(clear=True)
 
+    squash_stretch_setup = spline_ik_squash_stretch_setup(joint_list,ik_spline_curve,spline_axis)
 
 
+    cmds.parent(ik_spline_curve,spline_setup_ik_group)
+    cmds.parent(start_bind_joint,spline_setup_ik_group)
+    cmds.parent(mid_bind_joint, spline_setup_ik_group)
+    cmds.parent(end_bind_joint, spline_setup_ik_group)
+    cmds.parent(spline_ik_handle, spline_setup_ik_group)
+
+    cmds.setAttr(spline_ik_handle+'.visibility',0)
+    cmds.setAttr(ik_spline_curve + '.visibility', 0)
+
+    return [spline_setup_ik_group,start_joint_ctrl_grp,end_joint_ctrl_grp,mid_joint_ctrl_grp] + squash_stretch_setup
+
+
+
+def fk_spline_setup(start_joint, divisor):
+
+    """Function that does a FK setup based on the base joint of hierarchy
+
+    start_joint =  str
+    """
+
+    fk_joint_list = []
+
+    cmds.select(start_joint, hierarchy=True)
+
+    joint_list = cmds.ls(sl=True,type = 'joint')
+
+    cmds.select(clear=True)
+
+    joint_counter = 0
+
+    for eachJoint in joint_list:
+
+        if joint_counter % divisor == 0:
+            fk_joint_name = eachJoint.replace('_jnt', '_fk_jnt')
+
+            fk_joint = cmds.joint(n=fk_joint_name, radius=2)
+
+            cmds.matchTransform(fk_joint, eachJoint)
+
+            cmds.setAttr(fk_joint + '.displayLocalAxis', True)
+
+            fk_joint_list.append(fk_joint)
+
+        joint_counter += 1
+
+    print(joint_list)
+
+    print(fk_joint_list)
+
+    for eachJoint in fk_joint_list:
+        freeze(eachJoint)
+
+
+    fk_ctrl_list = []
+    fk_ctrl_group_list = []
+
+    for eachJoint in fk_joint_list:
+        fk_ctrl = create_controller(eachJoint, 2,
+                                                      18, 'circle', '_ctrl',
+                                                      'parent', False)
+
+        fk_ctrl_list.append(fk_ctrl[0])
+        fk_ctrl_group_list.append(fk_ctrl[1])
+
+    print(fk_ctrl_list)
+
+
+    reverse_ctrl_list = sorted(fk_ctrl_list)
+    reverse_grp_list = sorted(fk_ctrl_group_list)
+
+    for group, ctrl in zip(reverse_grp_list[1:], reverse_ctrl_list):
+        print(f'{group} -> {ctrl}')
+
+        cmds.parent(group, ctrl)
+
+    return fk_joint_list,fk_ctrl_list,fk_ctrl_group_list
+
+
+
+def spline_ik_squash_stretch_setup(joint_list,spline_curve_name,spline_axis):
+
+    """spline axis must be a str either, X,Y,Z"""
+
+    curve_info_node = cmds.arclen(spline_curve_name, constructionHistory=True)
+    curve_info_node_name = spline_curve_name + '_curveInfo'
+    if cmds.objExists('curveInfo1'):
+        cmds.rename('curveInfo1', curve_info_node_name)
+
+    spline_multiply_divide_node_name = spline_curve_name + '_multiplyDivide'
+
+    spline_multiply_divide_node = cmds.createNode('multiplyDivide', name=spline_multiply_divide_node_name)
+
+    cmds.connectAttr(curve_info_node_name + '.arcLength',
+                     spline_multiply_divide_node_name + '.input1' + '.input1'+spline_axis)
+
+    spline_arclen = cmds.arclen(spline_curve_name)
+
+    cmds.setAttr(spline_multiply_divide_node_name + '.input2' + '.input2'+spline_axis, spline_arclen)
+    cmds.setAttr(spline_multiply_divide_node_name + '.operation', 2)
+
+    spline_squash_stretch_pow_name = spline_curve_name + '_squashStretchPow'
+
+    spline_squash_stretch_pow = cmds.createNode('multiplyDivide', name=spline_squash_stretch_pow_name)
+
+    cmds.connectAttr(spline_multiply_divide_node_name + '.output' + '.output'+spline_axis,
+                     spline_squash_stretch_pow_name + '.input1' + '.input1'+spline_axis)
+
+    cmds.setAttr(spline_squash_stretch_pow_name + '.operation', 3)
+    cmds.setAttr(spline_squash_stretch_pow_name + '.input2' + '.input2'+spline_axis, 0.5)
+
+    spline_squash_stretch_invert_div_name = spline_curve_name + '_squashStretchInvertDiv'
+
+    spline_squash_stretch_invert_div = cmds.createNode('multiplyDivide', name=spline_squash_stretch_invert_div_name)
+
+    cmds.connectAttr(spline_squash_stretch_pow_name + '.output' + '.output'+spline_axis,
+                     spline_squash_stretch_invert_div_name + '.input2' + '.input2'+spline_axis)
+
+    cmds.setAttr(spline_squash_stretch_invert_div_name + '.operation', 2)
+    cmds.setAttr(spline_squash_stretch_invert_div_name + '.input1' + '.input1'+spline_axis, 1)
+
+    for eachJoint in joint_list:
+        cmds.connectAttr(spline_multiply_divide_node_name + '.output' + '.output'+spline_axis,
+                         eachJoint + '.scale' + '.scale'+spline_axis)
+
+    for eachJoint in joint_list:
+
+        if spline_axis == 'Y':
+
+            cmds.connectAttr(spline_squash_stretch_invert_div_name + '.output' + '.output'+spline_axis,
+                             eachJoint + '.scale' + '.scaleX')
+            cmds.connectAttr(spline_squash_stretch_invert_div_name + '.output' + '.output'+spline_axis,
+                             eachJoint + '.scale' + '.scaleZ')
+        if spline_axis == 'X':
+
+            cmds.connectAttr(spline_squash_stretch_invert_div_name + '.output' + '.output' + spline_axis,
+                             eachJoint + '.scale' + '.scaleY')
+            cmds.connectAttr(spline_squash_stretch_invert_div_name + '.output' + '.output' + spline_axis,
+                             eachJoint + '.scale' + '.scaleZ')
+
+        if spline_axis == 'Z':
+            cmds.connectAttr(spline_squash_stretch_invert_div_name + '.output' + '.output' + spline_axis,
+                             eachJoint + '.scale' + '.scaleY')
+            cmds.connectAttr(spline_squash_stretch_invert_div_name + '.output' + '.output' + spline_axis,
+                             eachJoint + '.scale' + '.scaleX')
+
+    cmds.setAttr(spline_curve_name+'.inheritsTransform',0)
+
+    return [curve_info_node_name,spline_multiply_divide_node_name]
+
+
+def get_distance_between_two_objects(obj_a, obj_b):
+    get_object_a_pos = cmds.xform(obj_a, q=True, t=True, ws=True)
+    get_object_b_pos = cmds.xform(obj_b, q=True, t=True, ws=True)
+
+    return sqrt(pow(get_object_a_pos[0] - get_object_b_pos[0], 2) + pow(get_object_a_pos[1] - get_object_b_pos[1], 2) + pow(get_object_a_pos[2] - get_object_b_pos[2], 2))
 
 
 

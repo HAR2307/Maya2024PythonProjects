@@ -67,12 +67,18 @@ def biped_hierarchy(asset_name):
     
     cmds.parent(guides_groups_list,master_guide_grp)
 
+    cmds.select(clear=True)
+
+
 
 
 def biped_spine_guides(letter):
 
     side = 'cn'
     spine = spine_guides.create_spine_guides(side, letter)
+
+    cmds.select(clear=True)
+
 
 
 
@@ -82,6 +88,8 @@ def biped_head_guides(letter):
 
     side = 'cn'
     head = head_guides.create_head_guides(side,letter)
+    cmds.select(clear=True)
+
 
 
 
@@ -89,6 +97,8 @@ def  biped_arm_guides(letter):
 
     side = 'lf'
     arm = arm_guides.create_left_arm_guides(side,letter)
+    cmds.select(clear=True)
+
 
 
 
@@ -99,11 +109,17 @@ def biped_leg_guides(letter):
 
     leg = leg_guides.create_left_leg_guides(side, letter)
 
+    cmds.select(clear=True)
+
+
 def biped_hand_guides(letter,finger_count):
 
     side = 'lf'
 
     hand = hand_guides.create_left_hand_guides(side,letter,finger_count)
+
+    cmds.select(clear=True)
+
 
 
 
