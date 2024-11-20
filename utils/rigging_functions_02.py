@@ -1,4 +1,5 @@
 import maya.cmds as cmds
+import maya.OpenMaya as om
 import re
 import importlib
 
@@ -149,6 +150,38 @@ def create_joints_from_guides(guide_list,joint_orientation):
     cmds.select(clear=True)
 
     return [rig_joints_list,skin_joints_list,chain_orientation]
+
+def connect_objects_trs(drive_joint_list,skin_joint_list):
+
+    connect_dict = {drive_joint_list[i]: skin_joint_list[i] for i in range(len(drive_joint_list))}
+
+    for driveJoint, skinJoint in connect_dict.items():
+
+        cmds.connectAttr(driveJoint+'.scale.scaleX',skinJoint+'.scale.scaleX')
+        cmds.connectAttr(driveJoint + '.scale.scaleY', skinJoint + '.scale.scaleY')
+        cmds.connectAttr(driveJoint + '.scale.scaleZ', skinJoint + '.scale.scaleZ')
+
+        cmds.connectAttr(driveJoint + '.translate.translateX', skinJoint + '.translate.translateX')
+        cmds.connectAttr(driveJoint + '.translate.translateY', skinJoint + '.translate.translateY')
+        cmds.connectAttr(driveJoint + '.translate.translateZ', skinJoint + '.translate.translateZ')
+
+        cmds.connectAttr(driveJoint + '.rotate.rotateX', skinJoint + '.rotate.rotateX')
+        cmds.connectAttr(driveJoint + '.rotate.rotateY', skinJoint + '.rotate.rotateY')
+        cmds.connectAttr(driveJoint + '.rotate.rotateZ', skinJoint + '.rotate.rotateZ')
+
+def parent_constraint_between_joints(drive_joint_list,skin_joint_list):
+
+    connect_dict = {drive_joint_list[i]: skin_joint_list[i] for i in range(len(drive_joint_list))}
+
+    for driveJoint, skinJoint in connect_dict.items():
+
+        cmds.parentConstraint(driveJoint,skinJoint,maintainOffset=True)
+
+
+
+
+
+
 
 
 

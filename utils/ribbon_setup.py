@@ -5,6 +5,7 @@ from utils import unparent_by_selection_order
 from utils import rigging_functions
 from utils import controller_curves
 from utils import create_ribbon_plane
+from utils import nurbs_ribbon_deformer_setup
 
 
 
@@ -14,6 +15,7 @@ importlib.reload(parent_by_selection_order)
 importlib.reload(unparent_by_selection_order)
 importlib.reload(controller_curves)
 importlib.reload(create_ribbon_plane)
+importlib.reload(nurbs_ribbon_deformer_setup)
 
 
 """
@@ -174,7 +176,7 @@ def create_ribbon(start_object,end_object,joint_list,create_full_bind_hierarchy,
     ribbon_setup_group = cmds.group(name=ribbon_setup_group_name,empty=True)
     cmds.setAttr(ribbon_setup_group + '.inheritsTransform', 0)
 
-    #cmds.delete(mid_pos_locator)
+    cmds.delete(mid_pos_locator)
 
     if not create_full_bind_hierarchy:
 
@@ -189,6 +191,8 @@ def create_ribbon(start_object,end_object,joint_list,create_full_bind_hierarchy,
 
         for eachJoint in follicle_bind_joints_list:
             cmds.parent(eachJoint,ribbon_setup_group)
+            cmds.setAttr(eachJoint + '.visibility', 0)
+
 
         cmds.parent(nurbs_plane,ribbon_setup_group)
         cmds.parent(follicle_group, ribbon_setup_group)
@@ -211,6 +215,8 @@ def create_ribbon(start_object,end_object,joint_list,create_full_bind_hierarchy,
 
             cmds.setAttr(joint_to_bind + '.displayLocalAxis', True)
 
+            cmds.setAttr(joint_to_bind + '.visibility', 0)
+
             cmds.matchTransform(joint_to_bind, eachJoint)
 
             joints_to_bind_list.append(joint_to_bind)
@@ -224,8 +230,18 @@ def create_ribbon(start_object,end_object,joint_list,create_full_bind_hierarchy,
 
         cmds.select(clear=True)
 
+        ribbon_driver_group_name = joints_to_bind_list[0].replace('_jnt','_grp')
+
+        ribbon_driver_group = cmds.group(name=ribbon_driver_group_name,empty=True)
+
+        cmds.parent(joints_to_bind_list[0],ribbon_driver_group)
+        cmds.setAttr(ribbon_driver_group + '.inheritsTransform', 0)
+
+        cmds.parent(ribbon_driver_group, ribbon_setup_group)
         cmds.parent(nurbs_plane, ribbon_setup_group)
         cmds.parent(follicle_group, ribbon_setup_group)
+
+
 
         return [joints_to_bind_list,ribbon_setup_group,surface_name]
 

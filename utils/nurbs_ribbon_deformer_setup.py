@@ -80,6 +80,17 @@ def sine_wave_deformer_setup(surface_name,controller_name,rotate_handle_x,rotate
 
     cmds.connectAttr(controller_name + '.wave_toggle', blendshape_name + '.'+ sine_wave_plane_name)
 
+    deformer_group_name = surface_name + '_sine_deformer_grp'
+
+    deformer_group = cmds.group(name=deformer_group_name, empty=True)
+
+    cmds.parent(sine_wave_plane_name,deformer_group)
+    cmds.parent(sine_deformer_handle, deformer_group)
+
+    return deformer_group_name
+
+
+
 
 
 

@@ -28,6 +28,8 @@ def ik_fk_chain_rig(joint_list, spline_spans, spline_handle_name, controller_col
                                       world_up_vector_x, world_up_vector_y, world_up_vector_z,
                                       world_up_vector_end_x, world_up_vector_end_y, world_up_vector_end_z,spline_axis)
 
+    ik_spline_setup_group = ik_spline_setup_list[0]
+
     print (ik_spline_setup_list)
 
     start_joint = joint_list[0]
@@ -49,6 +51,7 @@ def ik_fk_chain_rig(joint_list, spline_spans, spline_handle_name, controller_col
     start_fk_joint = fk_setup_list[0][0]
     end_fk_joint = fk_setup_list[0][(len(fk_setup_list[0])-1)]
     fk_setup_root_grp = fk_setup_list[2][0]
+    fk_joint_list = fk_setup_list[0]
 
 
     cmds.parentConstraint(start_fk_joint, start_bind_group,
@@ -121,5 +124,8 @@ def ik_fk_chain_rig(joint_list, spline_spans, spline_handle_name, controller_col
 
     cmds.select(clear=True)
 
-    return [ik_fk_setup_root_group_name,main_ik_fk_ctrl_name]
+    for eachJoint in fk_joint_list:
+        cmds.setAttr(eachJoint + '.visibility', 0)
+
+    return [ik_fk_setup_root_group_name,main_ik_fk_ctrl_name,ik_spline_setup_group]
 

@@ -1,5 +1,6 @@
 import maya.cmds as cmds
 
+
 from utils import parent_by_selection_order
 from utils import unparent_by_selection_order
 from utils import rigging_functions
@@ -8,6 +9,9 @@ from utils import ribbon_setup
 from auto_rigger import chain_guides
 from auto_rigger import ik_fk_chain_rig_setup
 from utils import rigging_functions_02
+from utils import create_master_controller
+from utils import nurbs_ribbon_deformer_setup
+
 
 import importlib
 importlib.reload(rigging_functions)
@@ -18,6 +22,8 @@ importlib.reload(ik_fk_chain_rig_setup)
 importlib.reload(ribbon_setup)
 importlib.reload(chain_guides)
 importlib.reload(rigging_functions_02)
+importlib.reload(create_master_controller)
+importlib.reload(nurbs_ribbon_deformer_setup)
 
 """
 copiar lo de abajo na mas pa usar el codigo
@@ -46,6 +52,11 @@ ik_fk_chain = ik_fk_chain_rig.create_ik_fk_chain(guide_list,joint_orientation)
 
 def create_ik_fk_chain(guide_list,joint_orientation):
 
+
+    master_TR = ''
+
+    master_TRS = ''
+
     chain_joints = rigging_functions_02.create_joints_from_guides(guide_list,joint_orientation)
 
     rig_joint_list = chain_joints[0]
@@ -62,21 +73,37 @@ def create_ik_fk_chain(guide_list,joint_orientation):
 
     print (chain_orientation_data)
 
-    skin_joints_group_name = skin_joint_list[0].replace('_jnt', '_skinJoints_grp')
-
-    skin_joints_group = cmds.group(empty=True, name=skin_joints_group_name)
-
     rig_group_name = rig_joint_list[0].replace('_jnt', '_rigMain_grp')
 
     rig_group = cmds.group(empty=True, name=rig_group_name)
 
     cmds.matchTransform(rig_group,rig_joint_list[0])
 
+    if cmds.objExists('*_master_TRS_*'):
+
+        master_TRS = cmds.ls('*_master_TRS_ctrl')
+        master_TR = cmds.ls('*_master_TR_ctrl')
+        skin_joints_group = cmds.ls('*_skinJoints_grp')
+
+        cmds.parent(skin_joint_list[0], skin_joints_group)
+
+
+    else:
+
+        asset_name = rig_joint_list[0].replace('_jnt','_asset')
+        master_ctrl_list = create_master_controller.create_hierarchy(asset_name)
+        master_TRS = master_ctrl_list[0]
+        master_TR = master_ctrl_list[1]
+        skin_joints_group = master_ctrl_list[2]
+
+        cmds.parent(skin_joint_list[0], skin_joints_group)
+
+
     start_joint = rig_joint_list[0]
     end_joint = rig_joint_list[len(rig_joint_list) - 1]
     spline_spans = 1
     spline_handle_name = rig_joint_list[0].replace('_jnt','_ik_splineHandle')
-    controller_color = 22
+    controller_color = 30
     controller_shape = 'cube'
     controller_size = 3
     world_up_type = 4
@@ -101,14 +128,15 @@ def create_ik_fk_chain(guide_list,joint_orientation):
 
     create_full_bind_hierarchy = True
 
-    ribbon_joint = ribbon_setup.create_ribbon(start_joint, end_joint, rig_joint_list,
+    ribbon_setup_list = ribbon_setup.create_ribbon(start_joint, end_joint, rig_joint_list,
                                               create_full_bind_hierarchy,rotate_in_x_axis,
                                               rotate_in_y_axis,rotate_in_z_axis)
 
-    ribbon_joint_list = ribbon_joint[0]
-    ribbon_setup_group = ribbon_joint[1]
+    ribbon_joint_list = ribbon_setup_list[0]
+    ribbon_setup_group = ribbon_setup_list[1]
+    ribbon_surface_name = ribbon_setup_list[2]
 
-    spine_ik_fk_setup_group = ik_fk_chain_rig_setup.ik_fk_chain_rig(ribbon_joint_list, spline_spans, spline_handle_name,
+    spline_ik_fk_setup_list = ik_fk_chain_rig_setup.ik_fk_chain_rig(ribbon_joint_list, spline_spans, spline_handle_name,
                                                                     controller_color,
                                                                     controller_shape,
                                                                     controller_size,
@@ -119,18 +147,20 @@ def create_ik_fk_chain(guide_list,joint_orientation):
                                                                     world_up_vector_end_z,
                                                                     control_spans,
                                                                     root_at_world,
-                                                                    rig_group,
+                                                                    master_TRS,
                                                                     spline_axis)
 
     cmds.select(clear=True)
 
-    cmds.parent(ribbon_setup_group, spine_ik_fk_setup_group[1])
+    spline_ik_fk_ctrl_name = spline_ik_fk_setup_list[1]
 
-    cmds.parent(skin_joint_list[0],skin_joints_group )
+    ribbon_sine_deformer_setup = nurbs_ribbon_deformer_setup.sine_wave_deformer_setup(ribbon_surface_name,spline_ik_fk_ctrl_name,rotate_in_y_axis,
+                                                                                      rotate_in_x_axis,rotate_in_y_axis)
 
-    cmds.parent(skin_joints_group,rig_group)
+    cmds.parent(ribbon_setup_group, spline_ik_fk_setup_list[1])
 
-    cmds.parent(spine_ik_fk_setup_group[0], rig_group)
+
+    cmds.parent(spline_ik_fk_setup_list[0], rig_group)
 
     cmds.select(clear=True)
 
@@ -138,6 +168,25 @@ def create_ik_fk_chain(guide_list,joint_orientation):
 
     for eachJoint in all_joints:
         cmds.setAttr(eachJoint+'.radius',0.1)
+
+    cmds.parent(ribbon_sine_deformer_setup, master_TR)
+
+    cmds.parent(rig_group_name,master_TR)
+
+    cmds.setAttr(ribbon_sine_deformer_setup+'.visibility',0)
+    cmds.setAttr(ribbon_setup_group + '.visibility', 0)
+
+    rigging_functions_02.parent_constraint_between_joints(rig_joint_list,skin_joint_list)
+
+    spline_ik_fk_ctrl_name = spline_ik_fk_setup_list[1]
+
+    rigging_functions.set_colors(spline_ik_fk_ctrl_name,9)
+
+
+
+
+
+
 
 
 

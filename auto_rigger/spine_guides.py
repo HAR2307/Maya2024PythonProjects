@@ -52,6 +52,7 @@ def create_spine_guides(side,letter):
     cmds.matchTransform(spine_guide_group, hips_guide)
     cmds.parent(hips_guide, spine_guide_group)
 
+
     #main_guide_group = cmds.group(em=True, name='Guides_grp')
 
     #cmds.parent(spine_guide_group, main_guide_group)

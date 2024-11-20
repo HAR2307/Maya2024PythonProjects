@@ -6,6 +6,7 @@ from utils import rigging_functions
 from utils import controller_curves
 from utils import ribbon_setup
 from auto_rigger import ik_fk_chain_rig_setup
+from utils import create_master_controller
 
 import importlib
 importlib.reload(rigging_functions)
@@ -14,6 +15,7 @@ importlib.reload(unparent_by_selection_order)
 importlib.reload(controller_curves)
 importlib.reload(ik_fk_chain_rig_setup)
 importlib.reload(ribbon_setup)
+importlib.reload(create_master_controller)
 
 """
 copiar lo de abajo na mas pa usar el codigo
@@ -27,8 +29,11 @@ from auto_rigger import spine_rig
 importlib.reload(spine_rig)
 
 
-spine_joint_list = spine_rig.create_spine_joints()[0]
-spine_rig.create_spine_rig(spine_joint_list)
+spine_joints = spine_rig.create_spine_joints()
+spine_rig_joints = spine_joints[0]
+spine_skin_joints  = spine_joints[1]
+
+spine_rig.create_spine_rig(spine_rig_joints,spine_skin_joints)
 
 """
 
@@ -95,7 +100,8 @@ def create_spine_joints():
 
     return [drive_spine_joint_list,skin_joint_list]
 
-def create_spine_rig (joint_list):
+def create_spine_rig (rig_joints,skin_joints):
+
 
     guide_root_group_name = cmds.ls('*_mainGuides_grp',type='transform')[0]
 
@@ -103,12 +109,20 @@ def create_spine_rig (joint_list):
 
     rig_main_group = cmds.group(empty=True,name=rig_main_group_name)
 
+    asset_name = guide_root_group_name.replace('_mainGuides_grp','')
 
-    start_joint =  joint_list[0]
-    end_joint =  joint_list[len(joint_list)-1]
+    master_ctrl_list = create_master_controller.create_hierarchy(asset_name)
+
+    master_TRS = master_ctrl_list[0]
+    master_TR = master_ctrl_list[1]
+    skin_joints_group = master_ctrl_list[2]
+
+
+    start_joint =  rig_joints[0]
+    end_joint =  rig_joints[len(rig_joints) - 1]
     spline_spans = 1
     spline_handle_name = 'cn_spine_ik_splineHandle'
-    controller_color = 22
+    controller_color = 30
     controller_shape = 'cube'
     controller_size = 3
     world_up_type = 4
@@ -131,8 +145,8 @@ def create_spine_rig (joint_list):
     rotate_in_z_axis = 90
 
 
-    ribbon_joint = ribbon_setup.create_ribbon(start_joint, end_joint, joint_list, create_full_bind_hierarchy,rotate_in_x_axis,
-                                              rotate_in_y_axis,rotate_in_z_axis)
+    ribbon_joint = ribbon_setup.create_ribbon(start_joint, end_joint, rig_joints, create_full_bind_hierarchy, rotate_in_x_axis,
+                                              rotate_in_y_axis, rotate_in_z_axis)
 
     ribbon_joint_list = ribbon_joint[0]
     ribbon_setup_group = ribbon_joint[1]
@@ -145,7 +159,7 @@ def create_spine_rig (joint_list):
                                       world_up_vector_end_x, world_up_vector_end_y, world_up_vector_end_z,
                                       control_spans,
                                       root_at_world,
-                                      rig_main_group,
+                                      master_TRS,
                                       spline_axis)
 
 
@@ -155,7 +169,25 @@ def create_spine_rig (joint_list):
 
     cmds.parent(spine_ik_fk_setup_group[0],rig_main_group)
 
+    cmds.parent(skin_joints[0],skin_joints_group)
+
+
+    cmds.parent(rig_main_group, master_TR)
+
     cmds.select(clear=True)
+
+    chest_joint = end_joint
+
+    spline_ik_fk_ctrl_name = spine_ik_fk_setup_group[1]
+
+    rigging_functions.set_colors(spline_ik_fk_ctrl_name, 9)
+
+    cmds.select(clear=True)
+
+
+    return [chest_joint,master_ctrl_list,rig_main_group_name]
+
+
 
 
 

@@ -51,6 +51,15 @@ def lock_scales(input_object):
     cmds.setAttr(input_object + '.sy', lock=True)
     cmds.setAttr(input_object + '.sz', lock=True)
 
+
+def lock_and_hide_attributes(input_object,attribute_name):
+
+    """attribute name must be str"""
+
+    cmds.setAttr(input_object + attribute_name,lock=True,keyable=False,channelBox=False)
+    cmds.setAttr(input_object + attribute_name, lock=True,keyable=False,channelBox=False)
+    cmds.setAttr(input_object + attribute_name, lock=True,keyable=False,channelBox=False)
+
 def toggle_visibility(input_object):
     visibility_state =  cmds.getAttr(input_object + '.v')
     if visibility_state == 0:
@@ -453,6 +462,7 @@ def spline_ik_setup(joint_list, spline_spans, spline_handle_name, controller_col
 
     cmds.matchTransform(start_bind_joint, start_joint)
     cmds.select(clear=True)
+    cmds.setAttr(start_bind_joint+'.visibility',0)
 
     mid_joint_name = mid_joint.replace('_jnt', '_mid_jnt')
 
@@ -460,6 +470,7 @@ def spline_ik_setup(joint_list, spline_spans, spline_handle_name, controller_col
 
     cmds.matchTransform(mid_bind_joint, mid_joint)
     cmds.select(clear=True)
+    cmds.setAttr(mid_bind_joint + '.visibility', 0)
 
     end_joint_name = end_joint.replace('_jnt', '_end_jnt')
 
@@ -467,6 +478,7 @@ def spline_ik_setup(joint_list, spline_spans, spline_handle_name, controller_col
 
     cmds.matchTransform(end_bind_joint, end_joint)
     cmds.select(clear=True)
+    cmds.setAttr(end_bind_joint + '.visibility', 0)
 
     start_joint_ctrl = create_controller(start_bind_joint, controller_size, controller_color, controller_shape,
                                          '_ik_ctrl',
@@ -597,10 +609,13 @@ def fk_spline_setup(start_joint, divisor):
         fk_ctrl_group_list.append(fk_ctrl[1])
 
     print(fk_ctrl_list)
+    print(fk_ctrl_group_list)
 
+    reverse_ctrl_list = fk_ctrl_list[::1]
+    reverse_grp_list = fk_ctrl_group_list[::1]
 
-    reverse_ctrl_list = sorted(fk_ctrl_list)
-    reverse_grp_list = sorted(fk_ctrl_group_list)
+    print(reverse_ctrl_list)
+    print(reverse_grp_list)
 
     for group, ctrl in zip(reverse_grp_list[1:], reverse_ctrl_list):
         print(f'{group} -> {ctrl}')
