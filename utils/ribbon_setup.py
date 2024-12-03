@@ -6,6 +6,7 @@ from utils import rigging_functions
 from utils import controller_curves
 from utils import create_ribbon_plane
 from utils import nurbs_ribbon_deformer_setup
+from utils import plane_from_points_snap
 
 
 
@@ -16,6 +17,7 @@ importlib.reload(unparent_by_selection_order)
 importlib.reload(controller_curves)
 importlib.reload(create_ribbon_plane)
 importlib.reload(nurbs_ribbon_deformer_setup)
+importlib.reload(plane_from_points_snap)
 
 
 """
@@ -45,8 +47,7 @@ ribbon_setup.create_ribbon(start,end,rotate_in_Z,joint_list,create_full_bind_hie
 
 """
 
-def create_ribbon(start_object,end_object,joint_list,create_full_bind_hierarchy,rotate_in_x_axis,rotate_in_y_axis,
-                  rotate_in_z_axis):
+def create_ribbon(start_object,end_object,joint_list,create_full_bind_hierarchy):
 
     joints_to_bind_list = []
 
@@ -54,30 +55,14 @@ def create_ribbon(start_object,end_object,joint_list,create_full_bind_hierarchy,
 
     cmds.delete(cmds.parentConstraint(start_object,end_object,mid_pos_locator))
 
-
-    distance_between_start_end = rigging_functions.get_distance_between_two_objects(start_object,end_object)
+    surface_name = joint_list[0].replace('_jnt', '_nurbs')
 
     first_joint = joint_list[0]
 
-    u_patches = len(joint_list)-1
 
-    v_patches = 1
+    distance_between_start_end = rigging_functions.get_distance_between_two_objects(start_object,end_object)
 
-    surface_name = joint_list[0].replace('_jnt','_nurbs')
-
-    plane_width = distance_between_start_end
-
-    plane_length = 0.1
-
-    nurbs_plane = create_ribbon_plane.create_surface(surface_name, plane_width,plane_length,u_patches,v_patches,
-                                                     rotate_in_x_axis, rotate_in_y_axis,
-                                                     rotate_in_z_axis)
-
-    cmds.delete(cmds.parentConstraint(mid_pos_locator,nurbs_plane))
-
-    rigging_functions.freeze(nurbs_plane)
-
-    #cmds.polyNormalizeUV(nurbs_plane)
+    nurbs_plane = plane_from_points_snap.create_plane(joint_list,surface_name)
 
     print(distance_between_start_end)
 
@@ -108,7 +93,7 @@ def create_ribbon(start_object,end_object,joint_list,create_full_bind_hierarchy,
         cmds.setAttr('follicle' + y + '.parameterV', 0.5)
         cmds.setAttr('follicle' + y + '.parameterU', float(i) / (len(joint_list) - 1))
 
-    cmds.delete(cmds.parentConstraint(mid_pos_locator, nurbs_plane))
+    #cmds.delete(cmds.parentConstraint(mid_pos_locator, nurbs_plane))
 
     follicle_transform_list = cmds.listRelatives(follicle_group,allDescendents=True,type = 'transform')
 

@@ -59,8 +59,14 @@ def create_hierarchy(asset_name):
         cmds.parent(geo_group,master_TR_ctrl_name)
         cmds.setAttr(geo_group + '.inheritsTransform', 0)
 
+    root_orient_loc_name = 'orientRoot_loc'
 
-    return [master_TRS_ctrl_name,master_TR_ctrl_name,skin_joint_group_name]
+    root_orient_loc = cmds.spaceLocator(name=root_orient_loc_name)[0]
+
+    cmds.parent(root_orient_loc_name,master_TR_ctrl_name)
+
+
+    return [master_TRS_ctrl_name,master_TR_ctrl_name,skin_joint_group_name,root_orient_loc_name]
 
 
 

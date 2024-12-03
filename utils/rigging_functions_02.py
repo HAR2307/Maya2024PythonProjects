@@ -177,6 +177,43 @@ def parent_constraint_between_joints(drive_joint_list,skin_joint_list):
 
         cmds.parentConstraint(driveJoint,skinJoint,maintainOffset=True)
 
+def fk_setup(joint_list,controller_color):
+
+    fk_ctrl_list = []
+    fk_ctrl_group_list = []
+    fk_joint_list = []
+
+    for eachJoint in joint_list:
+
+        fk_joint_name = eachJoint.replace('_jnt', '_fk_jnt')
+
+        fk_joint = cmds.joint(n=fk_joint_name, radius=1.5)
+
+        cmds.matchTransform(fk_joint, eachJoint)
+
+        cmds.setAttr(fk_joint + '.displayLocalAxis', True)
+
+        fk_joint_list.append(fk_joint)
+
+    for eachJoint in fk_joint_list:
+        fk_ctrl = rigging_functions.create_controller(eachJoint, 2,controller_color, 'circle',
+                                                      '_ctrl','parent', False)
+
+        fk_ctrl_list.append(fk_ctrl[0])
+        fk_ctrl_group_list.append(fk_ctrl[1])
+
+    print(fk_ctrl_list)
+    print(fk_ctrl_group_list)
+
+    for group, ctrl in zip(fk_ctrl_group_list[1:], fk_ctrl_list):
+        print(f'{group} -> {ctrl}')
+
+        cmds.parent(group, ctrl)
+
+    cmds.select(clear=True)
+
+    return joint_list,fk_ctrl_list,fk_ctrl_group_list
+
 
 
 

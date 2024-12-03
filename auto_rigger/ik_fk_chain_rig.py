@@ -101,7 +101,7 @@ def create_ik_fk_chain(guide_list,joint_orientation):
 
     start_joint = rig_joint_list[0]
     end_joint = rig_joint_list[len(rig_joint_list) - 1]
-    spline_spans = 1
+    spline_spans = 4
     spline_handle_name = rig_joint_list[0].replace('_jnt','_ik_splineHandle')
     controller_color = 30
     controller_shape = 'cube'
@@ -154,6 +154,9 @@ def create_ik_fk_chain(guide_list,joint_orientation):
 
     spline_ik_fk_ctrl_name = spline_ik_fk_setup_list[1]
 
+    # ribbon_sine_deformer_setup = nurbs_ribbon_deformer_setup.sine_wave_deformer_setup(ribbon_surface_name,spline_ik_fk_ctrl_name,rotate_in_y_axis,
+    #                                                                                  rotate_in_x_axis,rotate_in_y_axis)
+
     ribbon_sine_deformer_setup = nurbs_ribbon_deformer_setup.sine_wave_deformer_setup(ribbon_surface_name,spline_ik_fk_ctrl_name,rotate_in_y_axis,
                                                                                       rotate_in_x_axis,rotate_in_y_axis)
 
@@ -181,6 +184,35 @@ def create_ik_fk_chain(guide_list,joint_orientation):
     spline_ik_fk_ctrl_name = spline_ik_fk_setup_list[1]
 
     rigging_functions.set_colors(spline_ik_fk_ctrl_name,9)
+
+    # Crear space switch para el control de en medio
+
+
+    #mid_ctrl_parent_constraint_name = mid_joint_ctrl_name.replace('ctrl', 'parentConstraint')
+    #
+    #for eachCtrl in ik_ctrl_list:
+    #    cmds.parentConstraint(eachCtrl, mid_joint_ctrl_grp, maintainOffset=True, name=mid_ctrl_parent_constraint_name)
+    #
+    #cmds.addAttr(mid_joint_ctrl_name, longName='follow', at='enum', en=('world:both:chest:hips'), k=True)
+
+    # follow_world_condition_node_name = mid_joint_ctrl_name.replace('ctrl', 'followWorld_condition')
+    # follow_world_condition_node  = cmds.createNode('condition', name=follow_world_condition_node_name)
+    # condition_list.append(follow_world_condition_node_name)
+    #
+    # follow_both_condition_node_name = mid_joint_ctrl_name.replace('ctrl', 'followBoth_condition')
+    # follow_both_condition_node = cmds.createNode('condition', name=follow_both_condition_node_name)
+    # condition_list.append(follow_both_condition_node_name)
+    #
+    # follow_chest_condition_node_name = mid_joint_ctrl_name.replace('ctrl', 'followChest_condition')
+    # follow_chest_condition_node = cmds.createNode('condition', name=follow_chest_condition_node_name)
+    # condition_list.append(follow_chest_condition_node)
+    #
+    # follow_hips_condition_node_name = mid_joint_ctrl_name.replace('ctrl', 'followHips_condition')
+    # follow_hips_condition_node = cmds.createNode('condition', name=follow_hips_condition_node_name)
+    # condition_list.append(follow_hips_condition_node_name)
+    #
+    # for eachCondition in condition_list:
+    #    cmds.connectAttr(mid_joint_ctrl_name+'.follow',eachCondition+'.firstTerm')
 
 
 

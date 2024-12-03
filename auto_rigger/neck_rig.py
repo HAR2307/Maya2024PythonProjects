@@ -3,12 +3,14 @@ import maya.cmds as cmds
 from utils import parent_by_selection_order
 from utils import unparent_by_selection_order
 from utils import rigging_functions
+from utils import rigging_functions_02
 from utils import controller_curves
 from utils import ribbon_setup
 from auto_rigger import ik_fk_chain_rig_setup
 
 import importlib
 importlib.reload(rigging_functions)
+importlib.reload(rigging_functions_02)
 importlib.reload(parent_by_selection_order)
 importlib.reload(unparent_by_selection_order)
 importlib.reload(controller_curves)
@@ -88,6 +90,8 @@ def create_neck_joints():
 
 def create_neck_rig(joint_list,skin_joint_list):
 
+    space_switch_locators_list = []
+
     master_TR_ctrl = cmds.ls('*TR_ctrl',type='transform')[0]
     print(master_TR_ctrl)
     master_TRS_ctrl = cmds.ls('*TRS_ctrl',type='transform')[0]
@@ -99,7 +103,7 @@ def create_neck_rig(joint_list,skin_joint_list):
 
     start_joint = joint_list[0]
     end_joint = joint_list[len(joint_list) - 1]
-    spline_spans = 4
+    spline_spans = 2
     spline_handle_name = 'cn_neck_ik_splineHandle'
     controller_color = 30
     controller_shape = 'cube'
@@ -118,15 +122,10 @@ def create_neck_rig(joint_list,skin_joint_list):
     spline_axis = 'Y'
 
     create_full_bind_hierarchy = True
-    rotate_in_x_axis = 0
-    rotate_in_y_axis = 0
-    rotate_in_z_axis = 90
 
     #neck_ik_fk_setup_group
 
-    ribbon_joint = ribbon_setup.create_ribbon(start_joint, end_joint, joint_list, create_full_bind_hierarchy,
-                                              rotate_in_x_axis,
-                                              rotate_in_y_axis, rotate_in_z_axis)
+    ribbon_joint = ribbon_setup.create_ribbon(start_joint, end_joint, joint_list, create_full_bind_hierarchy)
 
     ribbon_joint_list = ribbon_joint[0]
     ribbon_setup_group = ribbon_joint[1]
@@ -150,6 +149,8 @@ def create_neck_rig(joint_list,skin_joint_list):
     neck_ik_setup_group = neck_ik_fk_setup_list[2]
 
     cmds.delete('cn_2_neck_ribbon_end_parentConstraint')
+
+    cmds.select(clear=True)
 
     head_drive_joint_name = end_joint.replace('neck','head')
 
@@ -196,12 +197,42 @@ def create_neck_rig(joint_list,skin_joint_list):
 
     cmds.parentConstraint(head_drive_joint,head_children_locator,name=head_children_locator_constraint_name,maintainOffset=False)
 
-    create_jaw(head_children_locator,head_drive_joint,head_skin_joint)
+    jaw_list = create_jaw(head_children_locator,head_drive_joint,head_skin_joint)
+    jaw_group = jaw_list[2]
+    jaw_joint_list = jaw_list[0]
+    jaw_skin_joint_list = jaw_list[1]
 
-   #cmds.parent(head_drive_joint,neck_ik_setup_group)
-   #cmds.parent(ribbon_setup_group,neck_ik_fk_setup_group)
-   #cmds.parent(neck_ik_fk_setup_group,rig_main_group)
-   #cmds.parent(skin_joint_list[0],skin_joints_group)
+
+    cmds.parent(head_drive_joint,neck_ik_setup_group)
+    cmds.parent(ribbon_setup_group,neck_ik_fk_setup_group)
+    cmds.parent(neck_ik_fk_setup_group,rig_main_group)
+    cmds.parent(skin_joint_list[0],skin_joints_group)
+    cmds.parent(head_children_locator,neck_ik_setup_group)
+    cmds.parent(jaw_group,neck_ik_setup_group)
+
+    for eachJoint in jaw_joint_list:
+        joint_list.append(eachJoint)
+
+    for eachJoint in jaw_skin_joint_list:
+        skin_joint_list.append(eachJoint)
+
+    rigging_functions_02.parent_constraint_between_joints(joint_list,skin_joint_list)
+
+    ###cambiar en la funcion del rig final
+
+    chest_joint_name = 'cn_6_chest_ribbon_jnt'
+    chest_skin_joint_name = 'cn_6_chest_skin_jnt'
+    neck_start_skin_joint = skin_joint_list[0]
+    hips_spline_IK_FK_setup_grp = 'cn_0_hips_ribbon_setupSplineIK_grp'
+    chest_children_loc = 'cn_6_chest_loc'
+
+    cmds.parent(neck_start_skin_joint,chest_skin_joint_name)
+
+    neck_ik_fk_setup_group_parentConstraint_name = neck_ik_fk_setup_group.replace('grp','pointConstraint')
+
+    cmds.parentConstraint('cn_6_chest_loc',neck_ik_fk_setup_group,name = neck_ik_fk_setup_group_parentConstraint_name,maintainOffset=True)
+
+    cmds.parent(jaw_list[4],neck_ik_setup_group)
 
 
 
@@ -253,8 +284,6 @@ def create_jaw(head_children_locator, head_drive_joint, head_skin_joint):
 
     jaw_group_parent_constraint_name = jaw_group_name.replace('grp','parentConstraint')
 
-    cmds.parentConstraint(head_children_locator,jaw_group,name= jaw_group_parent_constraint_name,maintainOffset=True)
-
     jaw_joint_list.append(jaw_joint_name)
     jaw_joint_list.append(jaw_end_joint_name)
 
@@ -270,7 +299,17 @@ def create_jaw(head_children_locator, head_drive_joint, head_skin_joint):
 
     cmds.parent(jaw_skin_joint_list[0],head_skin_joint)
 
-    return [jaw_joint_list,jaw_skin_joint_list]
+    jaw_controller = rigging_functions.create_controller(jaw_joint,1,22,'circle','ctrl','parent',True)
+
+    jaw_controller_name = jaw_controller[0]
+    jaw_controller_group = jaw_controller[1]
+
+    jaw_controller_group_parent_constraint_name = jaw_controller_group.replace('grp', 'parentConstraint')
+
+    cmds.parentConstraint(head_children_locator,jaw_controller_group,name=jaw_controller_group_parent_constraint_name)
+
+
+    return [jaw_joint_list,jaw_skin_joint_list,jaw_group_name,jaw_controller_name,jaw_controller_group]
 
 
 

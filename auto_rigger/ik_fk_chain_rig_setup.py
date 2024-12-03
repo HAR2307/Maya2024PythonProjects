@@ -127,5 +127,60 @@ def ik_fk_chain_rig(joint_list, spline_spans, spline_handle_name, controller_col
     for eachJoint in fk_joint_list:
         cmds.setAttr(eachJoint + '.visibility', 0)
 
-    return [ik_fk_setup_root_group_name,main_ik_fk_ctrl_name,ik_spline_setup_group]
+    #mid ctrl space switching setup
+
+    start_ctrl_ik_name = cmds.listRelatives(start_bind_group,allDescendents=True,type='transform')[0]
+    mid_ctrl_ik_name = cmds.listRelatives(mid_bind_group,allDescendents=True,type='transform')[0]
+    end_ctrl_ik_name = cmds.listRelatives(end_bind_group, allDescendents=True, type='transform')[0]
+
+    cmds.addAttr(mid_ctrl_ik_name, longName='follow', at='enum', en=('world:both:top:bottom'), k=True)
+    cmds.addAttr(mid_ctrl_ik_name, longName='startCtrl_parentConstraint_switch', at='bool', dv=0, k=True)
+    cmds.addAttr(mid_ctrl_ik_name, longName='endCtrl_parentConstraint_switch', at='bool', dv=0, k=True)
+
+    cmds.select(start_ctrl_ik_name,add=True)
+    cmds.select(end_ctrl_ik_name,add=True)
+    cmds.select(mid_bind_group,add=True)
+    mid_ctrl_parent_constraint_name = mid_ctrl_ik_name.replace('ctrl','parentConstraint')
+    mid_ctrl_parent_constraint = cmds.parentConstraint(name =mid_ctrl_parent_constraint_name, maintainOffset=True)
+    weight_list = cmds.parentConstraint(mid_ctrl_parent_constraint_name, query=True, weightAliasList=True)
+    start_weight_parent_constraint = weight_list[0]
+    end_weight_parent_constraint = weight_list[1]
+
+    cmds.connectAttr(mid_ctrl_ik_name+'.startCtrl_parentConstraint_switch',mid_ctrl_parent_constraint_name+'.'+ start_weight_parent_constraint)
+    cmds.connectAttr(mid_ctrl_ik_name + '.endCtrl_parentConstraint_switch',mid_ctrl_parent_constraint_name + '.' + end_weight_parent_constraint)
+
+    driver = mid_ctrl_ik_name + '.follow'
+
+    driven_01 = mid_ctrl_ik_name+'.startCtrl_parentConstraint_switch'
+
+    driven_02 = mid_ctrl_ik_name + '.endCtrl_parentConstraint_switch'
+
+    cmds.setAttr(driver, 0)
+    cmds.setAttr(driven_01, 0)
+    cmds.setAttr(driven_02, 0)
+    cmds.setDrivenKeyframe(driven_01, currentDriver=driver, inTangentType='linear', outTangentType='linear')
+    cmds.setDrivenKeyframe(driven_02, currentDriver=driver, inTangentType='linear', outTangentType='linear')
+
+    cmds.setAttr(driver, 1)
+    cmds.setAttr(driven_01, 1)
+    cmds.setAttr(driven_02, 1)
+    cmds.setDrivenKeyframe(driven_01, currentDriver=driver, inTangentType='linear', outTangentType='linear')
+    cmds.setDrivenKeyframe(driven_02, currentDriver=driver, inTangentType='linear', outTangentType='linear')
+
+    cmds.setAttr(driver, 2)
+    cmds.setAttr(driven_01, 0)
+    cmds.setAttr(driven_02, 1)
+    cmds.setDrivenKeyframe(driven_01, currentDriver=driver, inTangentType='linear', outTangentType='linear')
+    cmds.setDrivenKeyframe(driven_02, currentDriver=driver, inTangentType='linear', outTangentType='linear')
+
+    cmds.setAttr(driver, 3)
+    cmds.setAttr(driven_01, 1)
+    cmds.setAttr(driven_02, 0)
+    cmds.setDrivenKeyframe(driven_01, currentDriver=driver, inTangentType='linear', outTangentType='linear')
+    cmds.setDrivenKeyframe(driven_02, currentDriver=driver, inTangentType='linear', outTangentType='linear')
+
+    cmds.setAttr(driver, 0)
+
+
+    return [ik_fk_setup_root_group_name,main_ik_fk_ctrl_name,ik_spline_setup_group,start_bind_group,mid_bind_group,end_bind_group,start_ctrl_ik_name,mid_ctrl_ik_name,end_ctrl_ik_name]
 

@@ -455,6 +455,9 @@ def spline_ik_setup(joint_list, spline_spans, spline_handle_name, controller_col
 
     ik_spline_curve = ''
     ik_spline_effector = ''
+    ik_ctrl_list = []
+
+    curve_point_list = []
 
     start_joint_name = start_joint.replace('_jnt', '_start_jnt')
 
@@ -496,6 +499,13 @@ def spline_ik_setup(joint_list, spline_spans, spline_handle_name, controller_col
 
     end_joint_ctrl_grp = end_joint_ctrl[1]
 
+    start_joint_ctrl_name = start_joint_ctrl[0]
+
+    mid_joint_ctrl_name = mid_joint_ctrl[0]
+
+    end_joint_ctrl_name = end_joint_ctrl[0]
+
+
     spline_setup_ik_group = start_joint.replace('_jnt', '_setupSplineIK_grp')
 
     spline_setup_ik_group = cmds.group(empty=True, name=spline_setup_ik_group)
@@ -508,6 +518,13 @@ def spline_ik_setup(joint_list, spline_spans, spline_handle_name, controller_col
                   name=spline_handle_name)[0]
 
     if cmds.objExists('curve1'):
+
+       #for eachJoint in joint_list:
+       #
+       #    coordinates = cmds.xform(eachJoint, query=True, translation=True, worldSpace=True)
+       #    curve_point_list.append(coordinates)
+       #
+       #cmds.curve('curve1', r=True, p=curve_point_list)
         ik_spline_curve_name = spline_handle_name.replace('Handle','Curve')
         ik_spline_curve = cmds.rename('curve1',ik_spline_curve_name)
 
@@ -541,7 +558,9 @@ def spline_ik_setup(joint_list, spline_spans, spline_handle_name, controller_col
 
     cmds.select(clear=True)
 
-    squash_stretch_setup = spline_ik_squash_stretch_setup(joint_list,ik_spline_curve,spline_axis)
+    squash_stretch_setup_list = spline_ik_squash_stretch_setup(joint_list,ik_spline_curve,spline_axis)
+    curve_info_node_name = squash_stretch_setup_list[0]
+    spline_multiply_divide_node_name = squash_stretch_setup_list[1]
 
 
     cmds.parent(ik_spline_curve,spline_setup_ik_group)
@@ -553,7 +572,8 @@ def spline_ik_setup(joint_list, spline_spans, spline_handle_name, controller_col
     cmds.setAttr(spline_ik_handle+'.visibility',0)
     cmds.setAttr(ik_spline_curve + '.visibility', 0)
 
-    return [spline_setup_ik_group,start_joint_ctrl_grp,end_joint_ctrl_grp,mid_joint_ctrl_grp] + squash_stretch_setup
+
+    return [spline_setup_ik_group,start_joint_ctrl_grp,end_joint_ctrl_grp,mid_joint_ctrl_grp,curve_info_node_name,spline_multiply_divide_node_name]
 
 
 
