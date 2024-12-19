@@ -20,13 +20,13 @@ matchTransformsDictionary.match_transforms_from_two_lists(list1,list2)
 
 """
 
-def match_transforms_from_two_lists(list_1, list_2):
+def match_transforms_from_two_lists(first_list, second_list):
 
-    first_list = cmds.listRelatives(list_1,allDescendents=True,type='transform')
+    #first_list = cmds.listRelatives(list_1,allDescendents=True,type='transform')
 
     print(first_list)
 
-    second_list = cmds.listRelatives(list_2, allDescendents=True, type='transform')
+    #second_list = cmds.listRelatives(list_2, allDescendents=True, type='transform')
 
     print(second_list)
 

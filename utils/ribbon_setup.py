@@ -170,7 +170,7 @@ def create_ribbon(start_object,end_object,joint_list,create_full_bind_hierarchy)
 
         cmds.select(nurbs_plane,add=True)
 
-        cmds.skinCluster(bindMethod=0, maximumInfluences=3, name=surface_name + '_skinCluster')
+        cmds.skinCluster(bindMethod=0, maximumInfluences=5, name=surface_name + '_skinCluster')
 
         cmds.select(clear=True)
 
@@ -184,7 +184,7 @@ def create_ribbon(start_object,end_object,joint_list,create_full_bind_hierarchy)
 
         cmds.select(clear=True)
 
-        return [follicle_bind_joints_list,ribbon_setup_group]
+        return [follicle_bind_joints_list,ribbon_setup_group,joint_list]
 
     else:
 

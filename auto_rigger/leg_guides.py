@@ -102,6 +102,25 @@ def create_left_leg_guides(side,letter):
     for eachFootGuide in foot_guides_list:
         cmds.parent(eachFootGuide,lf_ankle_guide)
 
+    lf_upperKnee_guide = controller_curves.create_curve('cross',
+                                                   controller_name=side + '_' + '7' + '_' + letter + '_' + 'upperKnee_guide')
+    rigging_functions.set_scales(lf_upperKnee_guide, .2)
+    rigging_functions.set_colors(lf_upperKnee_guide, 6)
+
+    lf_lowerKnee_guide = controller_curves.create_curve('cross',
+                                                         controller_name=side + '_' + '7' + '_' + letter + '_' + 'lowerKnee_guide')
+    rigging_functions.set_scales(lf_lowerKnee_guide, .2)
+    rigging_functions.set_colors(lf_lowerKnee_guide, 6)
+
+    cmds.setAttr(lf_upperKnee_guide + '.tx', 3)
+    cmds.setAttr(lf_upperKnee_guide + '.ty', 4.1)
+
+    cmds.setAttr(lf_lowerKnee_guide + '.tx', 3)
+    cmds.setAttr(lf_lowerKnee_guide + '.ty', 3.9)
+
+    cmds.parent(lf_upperKnee_guide,lf_knee_guide)
+    cmds.parent(lf_lowerKnee_guide, lf_knee_guide)
+
 
    #if cmds.objExists('*hips_guide'):
    #

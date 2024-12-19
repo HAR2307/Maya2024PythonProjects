@@ -212,7 +212,33 @@ def fk_setup(joint_list,controller_color):
 
     cmds.select(clear=True)
 
-    return joint_list,fk_ctrl_list,fk_ctrl_group_list
+    return fk_joint_list,fk_ctrl_list,fk_ctrl_group_list
+
+def create_joints_from_two_points(start,end,joint_count,rig_side,joint_name):
+
+    cmds.select(clear=True)
+
+    joint_list = []
+
+    steps = 1.0 / (joint_count - 1)
+    perc = 0
+
+    for jointNumber in range(joint_count):
+
+        joint = cmds.joint(n=rig_side+str(jointNumber)+joint_name)
+        cmds.setAttr(joint + '.displayLocalAxis', True)
+
+        parent_constraint = cmds.parentConstraint(start, joint, weight=1.0 - perc)[0]
+        cmds.parentConstraint(end, joint, weight=perc)
+        cmds.delete(parent_constraint)
+
+        perc += steps
+
+        joint_list.append(joint)
+
+    cmds.select(clear=True)
+
+    return joint_list
 
 
 

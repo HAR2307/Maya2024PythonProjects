@@ -80,7 +80,7 @@ def label_joints(input_joint,label_name,rig_side):
     cmds.setAttr(input_joint + '.otherType',label_name,type='string')
 
 def freeze(target_object):
-    cmds.makeIdentity(target_object,apply=True, t = True, r = True, s = True, n = False)
+    cmds.makeIdentity(target_object,apply=True, t = True, r = True, s = True, n = False,jointOrient=False)
 
 def add_rotation_order_for_ctrls(object):
     cmds.addAttr(object, longName='Extra', at='enum', en=('____'), k=True)
@@ -112,8 +112,6 @@ def create_controller(joint, controller_size,controller_color, controller_shape,
 
     freeze(controller_shape)
 
-    cmds.matchTransform(controller_shape, joint)
-
     add_rotation_order_for_ctrls(controller_shape)
 
     set_colors(controller_shape, controller_color)
@@ -122,9 +120,15 @@ def create_controller(joint, controller_size,controller_color, controller_shape,
 
     ctrl_group_name = cmds.group(name=ctrl_group_name, empty=True)
 
-    cmds.matchTransform(ctrl_group_name, controller_shape)
-
     cmds.parent(controller_shape, ctrl_group_name)
+
+   #joint_translations = cmds.xform(joint, query=True, translation=True,worldSpace=True)
+   #joint_rotations = cmds.xform(joint, query=True, rotation=True,worldSpace=True)
+   #
+   #cmds.xform(ctrl_group_name,translation=joint_translations,rotation=joint_rotations,preserve=True)
+
+    cmds.matchTransform(ctrl_group_name, joint)
+
 
     if constraint_type == 'parent':
 
@@ -200,11 +204,15 @@ def mirror_guides():
 
     def mirror_guides_process(side_1,side_2,top_guide_group):
 
+        knee_guide_list = []
+
         mirrored_guides_list = []
 
         foot_guide_list = []
 
         ankle_guide = ''
+
+        knee_guide = ''
 
         mirrored_hand_group = ''
 
@@ -273,16 +281,32 @@ def mirror_guides():
                 set_colors(eachGuide, 6)
 
         for eachMirroredGuide in reverse_order_list:
+            if 'knee_guide' in eachMirroredGuide:
+                knee_guide = eachMirroredGuide
             if 'ankle_guide' in eachMirroredGuide:
                 ankle_guide = eachMirroredGuide
             if 'Foot' in eachMirroredGuide:
                 foot_guide_list.append(eachMirroredGuide)
+            if 'upperKnee_guide' in eachMirroredGuide:
+                knee_guide_list.append(eachMirroredGuide)
+            if 'lowerKnee_guide' in eachMirroredGuide:
+                knee_guide_list.append(eachMirroredGuide)
+
+        print(knee_guide_list)
+        print(knee_guide)
+
 
         for eachFootGuide in foot_guide_list:
             cmds.parent(eachFootGuide,world=True)
 
+        for eachKneeGuide in knee_guide_list:
+            cmds.parent(eachKneeGuide,world=True)
+
         for eachFootGuide in foot_guide_list:
             cmds.parent(eachFootGuide,ankle_guide)
+
+        for eachKneeGuide in knee_guide_list:
+            cmds.parent(eachKneeGuide,knee_guide)
 
         if 'hand' in mirrored_guides_parent_group:
 
