@@ -42,6 +42,13 @@ right_fk_leg = leg_rig.create_fk_leg_rig(right_leg_rig_joints)
 """
 def create_leg_joints():
 
+    right_upper_leg_guide = ''
+
+    left_upper_knee_guide = ''
+    left_lower_knee_guide = ''
+
+    right_upper_knee_guide = ''
+    right_lower_knee_guide = ''
 
     left_leg_rig_joints = []
     left_foot_rig_joints = []
@@ -54,6 +61,8 @@ def create_leg_joints():
 
     left_leg_skin_joints = []
     right_leg_skin_joints = []
+
+    knee_joint_name = ''
 
 
     all_left_guides = sorted(cmds.listRelatives('lf' + '*leg_guide_grp',allDescendents=True,type='transform'))
@@ -68,19 +77,36 @@ def create_leg_joints():
 
     for eachGuide in left_leg_guides:
 
-        leg_joint_name = eachGuide.replace('guide','jnt')
-        leg_joint = cmds.joint(name = leg_joint_name)
-        cmds.matchTransform(leg_joint,eachGuide)
-        left_leg_rig_joints.append(leg_joint_name)
-        cmds.setAttr(leg_joint + '.displayLocalAxis', True)
+        if 'upperKnee' not in eachGuide and 'lowerKnee' not in eachGuide:
+
+            leg_joint_name = eachGuide.replace('guide','jnt')
+            leg_joint = cmds.joint(name = leg_joint_name)
+            cmds.matchTransform(leg_joint,eachGuide)
+            left_leg_rig_joints.append(leg_joint_name)
+            cmds.setAttr(leg_joint + '.displayLocalAxis', True)
+
+        if 'upperKnee' in eachGuide:
+            left_upper_knee_guide = eachGuide
+        if 'lowerKnee' in eachGuide:
+            left_lower_knee_guide = eachGuide
 
     cmds.select(clear=True)
 
+
+
     for eachGuide in all_right_guides:
-        if 'Foot' not in eachGuide:
+        if 'Foot' not in eachGuide and 'upperKnee' not in eachGuide and 'lowerKnee' not in eachGuide:
             right_leg_guides.append(eachGuide)
         else:
-            right_foot_guides.append(eachGuide)
+            if 'Knee' not in eachGuide:
+                right_foot_guides.append(eachGuide)
+        if 'upperKnee' in eachGuide:
+            right_upper_knee_guide = eachGuide
+        if 'lowerKnee' in eachGuide:
+            right_lower_knee_guide = eachGuide
+        if 'upperLeg' in eachGuide:
+            right_upper_leg_guide = eachGuide
+
 
 
     cmds.select(clear=True)
@@ -120,18 +146,27 @@ def create_leg_joints():
 
     cmds.select(clear=True)
 
+    print(right_foot_guides)
+    print(right_foot_rig_joints)
+
+    match_right_foot_transform_dict = {right_foot_guides[i]: right_foot_rig_joints[i] for i in range(len(right_foot_guides))}
+
+    for guide,joint in match_right_foot_transform_dict.items():
+
+        right_foot_guides_translation = cmds.xform(guide, query=True, translation=True,worldSpace=True)
+        cmds.xform(joint, translation=right_foot_guides_translation, worldSpace=True)
+
     left_leg_upper_leg_start = left_leg_rig_joints[1]
     left_knee = left_leg_rig_joints[2]
     left_ankle = left_leg_rig_joints[3]
 
-
     left_upper_leg_rig_chain = rigging_functions_02.create_joints_from_two_points(left_leg_upper_leg_start,
-                                                                                  left_knee, 6, 'lf_',
+                                                                                  left_upper_knee_guide, 6, 'lf_',
                                                                                   '_upperLeg_jnt')
     cmds.select(clear=True)
 
 
-    left_lower_leg_rig_chain = rigging_functions_02.create_joints_from_two_points(left_knee,
+    left_lower_leg_rig_chain = rigging_functions_02.create_joints_from_two_points(left_lower_knee_guide,
                                                                                   left_ankle, 6, 'lf_',
                                                                                   '_lowerLeg_jnt')
     cmds.select(clear=True)
@@ -148,9 +183,12 @@ def create_leg_joints():
 
     right_leg_joint_chain = right_upper_leg_rig_chain + right_lower_leg_rig_chain
 
-    print(left_leg_joint_chain)
+    right_upper_leg_guide_translations = cmds.xform(right_upper_leg_guide, query=True, translation=True, worldSpace=True)
+    cmds.xform(right_upper_leg_rig_chain[0], translation=right_upper_leg_guide_translations, worldSpace=True)
 
-    print(right_leg_joint_chain)
+    right_lower_knee_guide_translations = cmds.xform(right_lower_knee_guide, query=True, translation=True,
+                                                     worldSpace=True)
+    cmds.xform(right_lower_leg_rig_chain[0], translation=right_lower_knee_guide_translations, worldSpace=True)
 
     left_leg_joint_chain_start = left_leg_joint_chain[0]
     left_leg_joint_chain_end = left_leg_joint_chain[len(left_leg_joint_chain) - 1]
